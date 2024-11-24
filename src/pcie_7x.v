@@ -396,6 +396,7 @@ module pcie_7x # (
 	input   [0:0] pci_exp_rxn,
 	input   [0:0] pci_exp_rxp,
 	input   pipe_mmcm_rst_n,
+	output  pipe_mmcm_lock,
 	// AXIS Common
 	output                                     user_clk_out, // actually is user_clk2
 	output reg user_reset_out,
