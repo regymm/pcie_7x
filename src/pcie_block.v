@@ -774,7 +774,7 @@ module pcie_block # (
     .trn_recrc_err( trn_recrc_err ),
 
     .user_clk( user_clk ),
-    .user_rst( user_rst )
+    .user_rst( user_reset )
   );
   wire tready_thrtl;
   pcie_7x_0_axi_basic_tx_pipeline #(
@@ -803,7 +803,7 @@ module pcie_block # (
     .tready_thrtl( tready_thrtl ),
 
     .user_clk( user_clk ),
-    .user_rst( user_rst )
+    .user_rst( user_reset )
   );
   pcie_7x_0_axi_basic_tx_thrtl_ctl #(
     .C_DATA_WIDTH( C_DATA_WIDTH )
@@ -814,16 +814,16 @@ module pcie_block # (
     .s_axis_tx_tuser( s_axis_tx_tuser ),
     .s_axis_tx_tlast( s_axis_tx_tlast ),
     // TRN RX in
-    .trn_tbuf_av( trn_tbuf_av ),
+    .trn_tbuf_av( tx_buf_av ),
     .trn_tdst_rdy( trn_tdst_rdy ),
 	// misc
-    .trn_tcfg_req( trn_tcfg_req ),
+    .trn_tcfg_req( tx_cfg_req ),
     .trn_tcfg_gnt( trn_tcfg_gnt ),
     .trn_lnk_up( trn_lnk_up ),
 
     .tready_thrtl( tready_thrtl ),
     .user_clk( user_clk ),
-    .user_rst( user_rst )
+    .user_rst( user_reset )
   );
 
   wire [3:0]        trn_tdst_rdy_bus;

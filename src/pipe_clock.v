@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: CERN-OHL-P
-//
-// Copyright 2022-2024 Wavelet Lab
-//
-// USDR PROJECT
-// CLEAN
-//
+// Copyright 2024 regymm
+// Reference: https://github.com/wavelet-lab/usdr-fpga/blob/main/lib/xilinx/xilinx_pcie_mmcm.v
 `timescale 1ns / 1ps
 
 // 100 MHz ref clock, 1 lane, Gen1

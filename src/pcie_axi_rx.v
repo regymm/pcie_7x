@@ -1,5 +1,5 @@
 // This file is licensed by the Vivado 2019.1 Webpack EULA available at
-// https://adaptivesupport.amd.com/s/question/0D52E00006hpVwQSAU/vivado-webpack-download
+// https://download.amd.com/docnav/documents/eula/end-user-license-agreement_2019.1.pdf
 //-----------------------------------------------------------------------------
 //
 // (c) Copyright 2010-2011 Xilinx, Inc. All rights reserved.
