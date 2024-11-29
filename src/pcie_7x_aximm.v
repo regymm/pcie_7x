@@ -1,12 +1,19 @@
+// SPDX-License-Identifier: CERN-OHL-P
+// Copyright 2024 regymm
+// PCIe to AXI4 Lite Memory-Mapped, can place on Block Design
 `timescale 1ns / 1ps
-
+`default_nettype wire
 
 // external clock, not external GT
 module pcie_7x_aximm (
-  output      pci_exp_txp,
-  output      pci_exp_txn,
-  input       pci_exp_rxp,
-  input       pci_exp_rxn,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:pcie_7x_mgt:1.0 pcie_7x_mgt txp" *)
+  output      pci_exp_txp[0:0],
+  (* X_INTERFACE_INFO = "xilinx.com:interface:pcie_7x_mgt:1.0 pcie_7x_mgt txn" *)
+  output      pci_exp_txn[0:0],
+  (* X_INTERFACE_INFO = "xilinx.com:interface:pcie_7x_mgt:1.0 pcie_7x_mgt rxp" *)
+  input       pci_exp_rxp[0:0],
+  (* X_INTERFACE_INFO = "xilinx.com:interface:pcie_7x_mgt:1.0 pcie_7x_mgt rxn" *)
+  input       pci_exp_rxn[0:0],
 
   // 100 MHz refclk in via BUFGDS
   input refclk,
@@ -24,7 +31,8 @@ module pcie_7x_aximm (
   output [2:0]msi_vector_width,
 
   // AXI Lite master interface
-  output m_axi_aclk,
+
+  output m_axi_clk,
   output m_axi_aresetn,
 
   output [31:0] m_axi_awaddr,
@@ -114,10 +122,10 @@ pcie_7x #
    ) 
 pcie_7x_i
   (
-  .pci_exp_txn                               ( pci_exp_txn ),
-  .pci_exp_txp                               ( pci_exp_txp ),
-  .pci_exp_rxn                               ( pci_exp_rxn ),
-  .pci_exp_rxp                               ( pci_exp_rxp ),
+  .pci_exp_txn                               ( pci_exp_txn[0] ),
+  .pci_exp_txp                               ( pci_exp_txp[0] ),
+  .pci_exp_rxn                               ( pci_exp_rxn[0] ),
+  .pci_exp_rxp                               ( pci_exp_rxp[0] ),
   .pipe_mmcm_rst_n                            ( 1 ),
   .pipe_mmcm_lock                            ( mmcm_lock ),
   // Common
@@ -197,6 +205,10 @@ wire            m_al_arready;
 wire[31:0]      m_al_rdata;
 wire            m_al_rvalid;
 wire            m_al_rready;
+
+wire [1:0]s_axis_tx_tkeep_2;
+assign s_axis_tx_tkeep = {{4{s_axis_tx_tkeep_2[1]}}, {4{s_axis_tx_tkeep_2[0]}}};
+
 axis_pcie_to_al_us #(
 	.ADDR_WIDTH(32),
 	.BUS_WIDTH(C_DATA_WIDTH),
@@ -204,7 +216,7 @@ axis_pcie_to_al_us #(
 	.TKEEP_WIDTH(C_DATA_WIDTH/32),
 	//.SYNC_READ_WRITE(0),
 	//.EN64BIT(1),
-	.DWISBE(1)
+	.DWISBE(0)
 ) axis_pcie_to_al_us_inst (
 	.clk(user_clk),
 	.rst_n(!user_reset_q),
@@ -238,10 +250,6 @@ axis_pcie_to_al_us #(
 	.m_al_rready(m_al_rready)
 );
 
-wire [1:0]s_axis_tx_tkeep_2;
-assign s_axis_tx_tkeep = {{4{s_axis_tx_tkeep_2[1]}}, {4{s_axis_tx_tkeep_2[0]}}};
-
-
 assign tx_cfg_gnt = 1'b1;                        // Always allow transmission of Config traffic within block
 assign rx_np_ok = 1'b1;                          // Allow Reception of Non-posted Traffic
 assign rx_np_req = 1'b1;                         // Always request Non-posted Traffic if available
@@ -259,7 +267,7 @@ assign cfg_interrupt_assert = 1'b0;
 assign cfg_interrupt_stat = 1'b0;
 assign cfg_interrupt_di= 0;
 
-assign m_axi_aclk = user_clk;
+assign m_axi_clk = user_clk;
 assign m_axi_aresetn = !user_reset_q;
 
 // Instantiate axil_to_al

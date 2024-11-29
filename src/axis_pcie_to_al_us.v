@@ -16,6 +16,7 @@
 //
 // Note: cfg_completer_id isn't used in US+ mode, PCIE4 core will fill it automatically in TLP
 //
+`default_nettype wire
 module axis_pcie_to_al_us #(
     parameter ADDR_WIDTH = 10,
     parameter BUS_WIDTH = 128,
@@ -152,7 +153,7 @@ if (ULTRA_SCALE) begin
     assign tlp64bit     = 1'b1;
     
     if (BUS_WIDTH != 128 && BUS_WIDTH != 256) begin
-        incorrect_us_bus_width module_error(.width(BUS_WIDTH));
+        //incorrect_us_bus_width module_error(.width(BUS_WIDTH));
     end
 end else begin
     wire [1:0] tlp_fmt;
@@ -164,7 +165,7 @@ end else begin
     assign tlp_attr   = 
         { s_axis_rx_tdata[18], s_axis_rx_tdata[13:12] };
     assign tlp_ep     = s_axis_rx_tdata[14];
-    assign tlp_dp     = s_axis_rx_tdata[15];
+    // assign tlp_dp     = s_axis_rx_tdata[15];
     // TH - 16
     // LN - 17
     //  reserved        s_axis_rx_tdata[19]
@@ -188,7 +189,7 @@ end else begin
     //Beat 1: ADDR32 or ADDR64
        
     if (BUS_WIDTH != 64) begin
-        incorrect_7s_bus_width module_error(.width(BUS_WIDTH));
+        //incorrect_7s_bus_width module_error(.width(BUS_WIDTH));
     end
 end
 endgenerate

@@ -1,50 +1,10 @@
-//-----------------------------------------------------------------------------
+// SPDX-License-Identifier: CERN-OHL-P
 //
-// (c) Copyright 2010-2011 Xilinx, Inc. All rights reserved.
+// Copyright 2022-2024 Wavelet Lab
 //
-// This file contains confidential and proprietary information
-// of Xilinx, Inc. and is protected under U.S. and
-// international copyright and other intellectual property
-// laws.
+// USDR PROJECT
+// CLEAN
 //
-// DISCLAIMER
-// This disclaimer is not a license and does not grant any
-// rights to the materials distributed herewith. Except as
-// otherwise provided in a valid license issued to you by
-// Xilinx, and to the maximum extent permitted by applicable
-// law: (1) THESE MATERIALS ARE MADE AVAILABLE "AS IS" AND
-// WITH ALL FAULTS, AND XILINX HEREBY DISCLAIMS ALL WARRANTIES
-// AND CONDITIONS, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING
-// BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, NON-
-// INFRINGEMENT, OR FITNESS FOR ANY PARTICULAR PURPOSE; and
-// (2) Xilinx shall not be liable (whether in contract or tort,
-// including negligence, or under any other theory of
-// liability) for any loss or damage of any kind or nature
-// related to, arising under or in connection with these
-// materials, including for any direct, or any indirect,
-// special, incidental, or consequential loss or damage
-// (including loss of data, profits, goodwill, or any type of
-// loss or damage suffered as a result of any action brought
-// by a third party) even if such damage or loss was
-// reasonably foreseeable or Xilinx had been advised of the
-// possibility of the same.
-//
-// CRITICAL APPLICATIONS
-// Xilinx products are not designed or intended to be fail-
-// safe, or for use in any application requiring fail-safe
-// performance, such as life-support or safety devices or
-// systems, Class III medical devices, nuclear facilities,
-// applications related to the deployment of airbags, or any
-// other applications that could lead to death, personal
-// injury, or severe property or environmental damage
-// (individually and collectively, "Critical
-// Applications"). Customer assumes the sole risk and
-// liability of any use of Xilinx products in Critical
-// Applications, subject only to applicable laws and
-// regulations governing limitations on product liability.
-//
-// THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
-// PART OF THIS FILE AT ALL TIMES.
 `timescale 1ns / 1ps
 
 // 100 MHz ref clock, 1 lane, Gen1
@@ -52,10 +12,8 @@ module pipe_clock # (
     parameter PCIE_USERCLK1_FREQ = 2,
     parameter PCIE_USERCLK2_FREQ = 2
 )(
-    //---------- Input -------------------------------------
     input                       CLK_TXOUTCLK,
     input                       CLK_RST_N,
-    //---------- Output ------------------------------------
     output                      CLK_PCLK,
     output                      CLK_RXUSRCLK,
     output                      CLK_DCLK,
@@ -64,7 +22,6 @@ module pipe_clock # (
     output                      CLK_USERCLK2,
     output                      CLK_MMCM_LOCK
 );
-    //---------- Select Clock Divider ----------------------
     localparam          CLKOUT2_DIVIDE   = (PCIE_USERCLK1_FREQ == 5) ?  2 : 
                                            (PCIE_USERCLK1_FREQ == 4) ?  4 :
                                            (PCIE_USERCLK1_FREQ == 3) ?  8 :
@@ -74,10 +31,7 @@ module pipe_clock # (
                                            (PCIE_USERCLK2_FREQ == 3) ?  8 :
                                            (PCIE_USERCLK2_FREQ == 1) ? 32 : 16;
 
-BUFG txoutclk_i (
-	.I                          (CLK_TXOUTCLK),
-	.O                          (refclk)
-);
+	BUFG txoutclk_i ( .I(CLK_TXOUTCLK), .O(refclk));
 
 	//wire                            clk_250mhz;
 	//wire                            oobclk;
@@ -91,7 +45,7 @@ BUFG txoutclk_i (
 		.CLKOUT4_CASCADE            ("FALSE"),
 		.COMPENSATION               ("ZHOLD"),
 		.STARTUP_WAIT               ("FALSE"),
-		.DIVCLK_DIVIDE              (1), // nothign
+		.DIVCLK_DIVIDE              (1), // nothing
 		.CLKFBOUT_MULT_F            (10),  // 100 * 10 = 1000
 		.CLKFBOUT_PHASE             (0.000),
 		.CLKFBOUT_USE_FINE_PS       ("FALSE"),
@@ -119,8 +73,8 @@ BUFG txoutclk_i (
 		.REF_JITTER1                (0.010)
 	) mmcm_i (
 		.CLKIN1                     (refclk),
-		.CLKIN2                     (1'd0),                     // not used, comment out CLKIN2 if it cause implementation issues
-	  //.CLKIN2                     (refclk),                   // not used, comment out CLKIN2 if it cause implementation issues
+		.CLKIN2                     (1'd0),
+	  //.CLKIN2                     (refclk),
 		.CLKINSEL                   (1'd1),
 		.CLKFBIN                    (mmcm_fb),
 		.RST                        (!CLK_RST_N),
@@ -159,41 +113,17 @@ BUFG txoutclk_i (
 	); 
 
     wire                            clk_125mhz_buf;
-    BUFG pclk_i1 (
-        .I                          (clk_125mhz), 
-        .O                          (clk_125mhz_buf)
-    );
+    BUFG pclk_i1 ( .I(clk_125mhz), .O(clk_125mhz_buf));
 
-// we keep the ability to change user clock freq
 	wire                        userclk1_1;
 	wire                        userclk2_1;
-generate if (PCIE_USERCLK1_FREQ == 3) 
-    //---------- USERCLK1 same as PCLK -------------------
-    begin :userclk1_i1_no_bufg
-    assign userclk1_1 =clk_125mhz_buf;
-    end 
-else begin : userclk1_i1
-    BUFG usrclk1_i1 (
-        .I                          (userclk1),
-        .O                          (userclk1_1)
-    );
-    end 
-endgenerate 
+    BUFG usrclk1_i1 ( .I(userclk1), .O(userclk1_1));
 generate if (PCIE_USERCLK2_FREQ == 3 ) 
-	//---------- USERCLK2 same as PCLK -------------------
-    begin : userclk2_i1_no_bufg0
     assign userclk2_1 = clk_125mhz_buf;
-    end 
 else if (PCIE_USERCLK2_FREQ == PCIE_USERCLK1_FREQ ) 
-	//---------- USERCLK2 same as USERCLK1 -------------------
-    begin : userclk2_i1_no_bufg1
     assign userclk2_1 = userclk1_1;
-    end  
 else begin : userclk2_i1
-    BUFG usrclk2_i1 (
-        .I                          (userclk2),
-        .O                          (userclk2_1)
-    );
+    BUFG usrclk2_i1 ( .I(userclk2), .O(userclk2_1));
     end
 endgenerate 
 
@@ -202,8 +132,5 @@ endgenerate
 	assign CLK_OOBCLK = clk_125mhz_buf;
 	assign CLK_USERCLK1 = userclk1_1;
 	assign CLK_USERCLK2 = userclk2_1;
-
-	//---------- PIPE Clock Output
 	assign CLK_PCLK      = clk_125mhz_buf;
-
 endmodule

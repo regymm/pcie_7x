@@ -1,3 +1,5 @@
+// This file is licensed by the Vivado 2019.1 Webpack EULA available at
+// https://adaptivesupport.amd.com/s/question/0D52E00006hpVwQSAU/vivado-webpack-download
 //-----------------------------------------------------------------------------
 //
 // (c) Copyright 2010-2011 Xilinx, Inc. All rights reserved.
@@ -50,7 +52,6 @@
 module pcie_block # (
   // DEFAULT PARAMETERS
   // PCIE_2_1 params
-  parameter        PIPE_PIPELINE_STAGES = 0,                // 0 - 0 stages, 1 - 1 stage, 2 - 2 stages
   parameter [11:0] AER_BASE_PTR = 12'h140,
   parameter        AER_CAP_ECRC_CHECK_CAPABLE = "FALSE",
   parameter        DEV_CAP_ROLE_BASED_ERROR = "TRUE",
@@ -592,7 +593,6 @@ module pcie_block # (
   input wire  [2:0]          pipe_rx0_status_gt,
   input wire                 pipe_rx0_valid_gt
 );
-  //wire declaration
   // TRN Interface
   wire [C_DATA_WIDTH-1:0]  trn_td;
   wire [REM_WIDTH-1:0]     trn_trem;
@@ -750,53 +750,80 @@ module pcie_block # (
     end
   end
 
-  pcie_axi #(
-    .C_DATA_WIDTH     (C_DATA_WIDTH)       // RX/TX interface data width
-  ) pcie_axi_inst (
-    // AXI TX
-    .s_axis_tx_tdata          (s_axis_tx_tdata),          //  input
-    .s_axis_tx_tvalid         (s_axis_tx_tvalid),         //  input
-    .s_axis_tx_tready         (s_axis_tx_tready),         //  output
-    .s_axis_tx_tkeep          (s_axis_tx_tkeep),          //  input
-    .s_axis_tx_tlast          (s_axis_tx_tlast),          //  input
-    .s_axis_tx_tuser          (s_axis_tx_tuser),          //  input
-    // AXI RX
-    .m_axis_rx_tdata          (m_axis_rx_tdata),          //  output
-    .m_axis_rx_tvalid         (m_axis_rx_tvalid),         //  output
-    .m_axis_rx_tready         (m_axis_rx_tready),         //  input
-    .m_axis_rx_tkeep          (m_axis_rx_tkeep),          //  output
-    .m_axis_rx_tlast          (m_axis_rx_tlast),          //  output
-    .m_axis_rx_tuser          (m_axis_rx_tuser),          //  output
-    // TRN TX
-    .trn_td                   (trn_td),                   //  output
-    .trn_tsof                 (trn_tsof),                 //  output
-    .trn_teof                 (trn_teof),                 //  output
-    .trn_tsrc_rdy             (trn_tsrc_rdy),             //  output
-    .trn_tdst_rdy             (trn_tdst_rdy),             //  input
-    .trn_tsrc_dsc             (trn_tsrc_dsc),             //  output
-    .trn_trem                 (trn_trem),                 //  output
-    .trn_terrfwd              (trn_terrfwd),              //  output
-    .trn_tstr                 (trn_tstr),                 //  output
-    .trn_tbuf_av              (tx_buf_av),                //  input
-    .trn_tecrc_gen            (trn_tecrc_gen),            //  output
-    // TRN RX
-    .trn_rd                   (trn_rd),                   //  input
-    .trn_rsof                 (trn_rsof),                 //  input
-    .trn_reof                 (trn_reof),                 //  input
-    .trn_rsrc_rdy             (trn_rsrc_rdy),             //  input
-    .trn_rdst_rdy             (trn_rdst_rdy),             //  output
-    .trn_rsrc_dsc             (trn_rsrc_dsc),             //  input
-    .trn_rrem                 (trn_rrem),                 //  input
-    .trn_rerrfwd              (trn_rerrfwd),              //  input
-    .trn_rbar_hit             (trn_rbar_hit[6:0]),             //  input
-    .trn_recrc_err            (trn_recrc_err),            //  input
-    // TRN Misc.
-    .trn_tcfg_req             ( tx_cfg_req ),             //  input
-    .trn_tcfg_gnt             ( trn_tcfg_gnt),            //  output
-    .trn_lnk_up               ( user_lnk_up),             //  input
-    // System
-    .user_clk                 (user_clk_out),             //  input
-    .user_rst                 (user_reset)               //  input
+  pcie_7x_0_axi_basic_rx_pipeline #(
+    .C_DATA_WIDTH( C_DATA_WIDTH ),
+    .REM_WIDTH( REM_WIDTH ),
+    .KEEP_WIDTH( KEEP_WIDTH )
+  ) trn2axi_rx (
+    .m_axis_rx_tdata( m_axis_rx_tdata ),
+    .m_axis_rx_tvalid( m_axis_rx_tvalid ),
+    .m_axis_rx_tready( m_axis_rx_tready ),
+    .m_axis_rx_tkeep( m_axis_rx_tkeep ),
+    .m_axis_rx_tlast( m_axis_rx_tlast ),
+    .m_axis_rx_tuser( m_axis_rx_tuser ),
+
+    .trn_rd( trn_rd[C_DATA_WIDTH-1:0] ),
+    .trn_rsof( trn_rsof ),
+    .trn_reof( trn_reof ),
+    .trn_rsrc_rdy( trn_rsrc_rdy ),
+    .trn_rdst_rdy( trn_rdst_rdy ),
+    .trn_rsrc_dsc( trn_rsrc_dsc ),
+    .trn_rrem( trn_rrem ),
+    .trn_rerrfwd( trn_rerrfwd ),
+    .trn_rbar_hit( trn_rbar_hit ),
+    .trn_recrc_err( trn_recrc_err ),
+
+    .user_clk( user_clk ),
+    .user_rst( user_rst )
+  );
+  wire tready_thrtl;
+  pcie_7x_0_axi_basic_tx_pipeline #(
+    .C_DATA_WIDTH( C_DATA_WIDTH ),
+    .REM_WIDTH( REM_WIDTH ),
+    .KEEP_WIDTH( KEEP_WIDTH )
+  ) trn2axi_tx (
+    .s_axis_tx_tdata( s_axis_tx_tdata ),
+    .s_axis_tx_tready( s_axis_tx_tready ),
+    .s_axis_tx_tvalid( s_axis_tx_tvalid ),
+    .s_axis_tx_tkeep( s_axis_tx_tkeep ),
+    .s_axis_tx_tlast( s_axis_tx_tlast ),
+    .s_axis_tx_tuser( s_axis_tx_tuser ),
+
+    .trn_td( trn_td ),
+    .trn_tsof( trn_tsof ),
+    .trn_teof( trn_teof ),
+    .trn_tsrc_rdy( trn_tsrc_rdy ),
+    .trn_tdst_rdy( trn_tdst_rdy ),
+    .trn_tsrc_dsc( trn_tsrc_dsc ),
+    .trn_trem( trn_trem ),
+    .trn_terrfwd( trn_terrfwd ),
+    .trn_tstr( trn_tstr ),
+    .trn_tecrc_gen( trn_tecrc_gen ),
+    .trn_lnk_up( trn_lnk_up ),
+    .tready_thrtl( tready_thrtl ),
+
+    .user_clk( user_clk ),
+    .user_rst( user_rst )
+  );
+  pcie_7x_0_axi_basic_tx_thrtl_ctl #(
+    .C_DATA_WIDTH( C_DATA_WIDTH )
+  ) tx_thrl_ctl_inst (
+    // AXI TX out
+    .s_axis_tx_tdata( s_axis_tx_tdata ),
+    .s_axis_tx_tvalid( s_axis_tx_tvalid ),
+    .s_axis_tx_tuser( s_axis_tx_tuser ),
+    .s_axis_tx_tlast( s_axis_tx_tlast ),
+    // TRN RX in
+    .trn_tbuf_av( trn_tbuf_av ),
+    .trn_tdst_rdy( trn_tdst_rdy ),
+	// misc
+    .trn_tcfg_req( trn_tcfg_req ),
+    .trn_tcfg_gnt( trn_tcfg_gnt ),
+    .trn_lnk_up( trn_lnk_up ),
+
+    .tready_thrtl( tready_thrtl ),
+    .user_clk( user_clk ),
+    .user_rst( user_rst )
   );
 
   wire [3:0]        trn_tdst_rdy_bus;

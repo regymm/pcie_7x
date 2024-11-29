@@ -1,10 +1,5 @@
-/**
- * File              : axil_minimum.v
- * License           : GPL-3.0-or-later
- * Author            : Peter Gu <github.com/regymm>
- * Date              : 2024.11.20
- * Last Modified Date: 2024.11.20
- */
+// SPDX-License-Identifier: CERN-OHL-P
+// Copyright 2024 regymm
 module axil_minimum(
 	input clk,
 	input rst_n,

@@ -1,3 +1,5 @@
+// This file is licensed by the Vivado 2019.1 Webpack EULA available at
+// https://adaptivesupport.amd.com/s/question/0D52E00006hpVwQSAU/vivado-webpack-download
 //-----------------------------------------------------------------------------
 //
 // (c) Copyright 2010-2011 Xilinx, Inc. All rights reserved.
@@ -356,15 +358,19 @@ module pipe_wrapper # (
 			FSM_PLLRESET : begin
 				rst_cpllreset  <= 1'd1;
 				rst_gtreset   <= 1'd1;
-				if ((~plllock_reg2) && (&(~resetdone_reg2))) fsm <= FSM_DRP_X16_START;
+				if (
+					//(~plllock_reg2) && // TODO: for openxc7?
+					(&(~resetdone_reg2))) fsm <= FSM_DRP_X16_START;
 			end  
 			//---------- Start DRP x16 -------------------------
 			FSM_DRP_X16_START : begin
-				if (&(~drp_done_reg2)) fsm <= FSM_DRP_X16_DONE;
+				//if (&(~drp_done_reg2))
+					fsm <= FSM_DRP_X16_DONE;
 			end
 			//---------- Wait for DRP x16 Done -----------------    
 			FSM_DRP_X16_DONE : begin  
-				if (&drp_done_reg2) fsm <= FSM_PLLLOCK;
+				//if (&drp_done_reg2)
+					fsm <= FSM_PLLLOCK;
 			end  
 			//---------- Wait for PLL Lock --------------------
 			FSM_PLLLOCK : begin
@@ -386,11 +392,13 @@ module pipe_wrapper # (
 			end  
 			//---------- Start DRP x20 -------------------------
 			FSM_DRP_X20_START : begin
-				if (&(~drp_done_reg2)) fsm <= FSM_DRP_X20_DONE;
+				//if (&(~drp_done_reg2))
+					fsm <= FSM_DRP_X20_DONE;
 			end
 			//---------- Wait for DRP x20 Done -----------------    
 			FSM_DRP_X20_DONE : begin
-				if (&drp_done_reg2) fsm <= FSM_MMCM_LOCK;
+				//if (&drp_done_reg2)
+					fsm <= FSM_MMCM_LOCK;
 			end
 			//---------- Wait for MMCM and RX CDR Lock ---------
 			FSM_MMCM_LOCK : begin  
@@ -465,21 +473,21 @@ module pipe_wrapper # (
 	assign PIPE_PHYSTATUS_RST[0] = !rst_idle_reg;
     
     
-	gtp_pipe_drp gtp_pipe_drp_inst (
-		.DRP_CLK                        (PIPE_DCLK_IN),
-		.DRP_RST_N                      (!rst_dclk_reset),
-		.DRP_X16                        (rst_drp_x16),
-		.DRP_START                      (rst_drp_start),                      
-		.DRP_DO                         (drp_do[15:0]),
-		.DRP_RDY                        (drp_rdy[0]),
+	//gtp_pipe_drp gtp_pipe_drp_inst (
+		//.DRP_CLK                        (PIPE_DCLK_IN),
+		//.DRP_RST_N                      (!rst_dclk_reset),
+		//.DRP_X16                        (rst_drp_x16),
+		//.DRP_START                      (rst_drp_start),                      
+		//.DRP_DO                         (drp_do[15:0]),
+		//.DRP_RDY                        (drp_rdy[0]),
 
-		//.DRP_ADDR                       (drp_addr[8:0]),
-		.DRP_EN                         (drp_en[0]),  
-		.DRP_DI                         (drp_di[15:0]),   
-		.DRP_WE                         (drp_we[0]),
-		.DRP_DONE                       (drp_done[0])
-		//.DRP_FSM                        (drp_fsm[2:0])
-	);
+		////.DRP_ADDR                       (drp_addr[8:0]),
+		//.DRP_EN                         (drp_en[0]),  
+		//.DRP_DI                         (drp_di[15:0]),   
+		//.DRP_WE                         (drp_we[0]),
+		//.DRP_DONE                       (drp_done[0])
+		////.DRP_FSM                        (drp_fsm[2:0])
+	//);
 
 	// CPLL powerdown and reset
     (* equivalent_register_removal="no" *)  reg [95:0] cpllpd_wait = 96'hFFFFFFFFFFFFFFFFFFFFFFFF;             
@@ -527,55 +535,58 @@ module pipe_wrapper # (
         //.GTGREFCLK1                     ( 1'd0),
         .GTREFCLK0                      (PIPE_CLK),
         //.GTREFCLK1                      ( 1'd0),
-        .GTEASTREFCLK0                  ( 1'd0),
-        .GTEASTREFCLK1                  ( 1'd0),
-        .GTWESTREFCLK0                  ( 1'd0),
-        .GTWESTREFCLK1                  ( 1'd0),
-        .PLL0LOCKDETCLK                 (1'd0),
-        .PLL1LOCKDETCLK                 (1'd0),
+		//.GTEASTREFCLK0                  ( 1'd0),
+		//.GTEASTREFCLK1                  ( 1'd0),
+		//.GTWESTREFCLK0                  ( 1'd0),
+		//.GTWESTREFCLK1                  ( 1'd0),
+		.PLL0LOCKDETCLK                 (1'd0),
+		.PLL1LOCKDETCLK                 (1'd0),
         .PLL0LOCKEN                     ( 1'd1),
-        .PLL1LOCKEN                     ( 1'd1),
+		.PLL1LOCKEN                     ( 1'd1),
         .PLL0REFCLKSEL                  ( 3'd1),
-        .PLL1REFCLKSEL                  ( 3'd1),
-        .PLLRSVD1                       (16'd0),
-        .PLLRSVD2                       ( 5'd0),
+		.PLL1REFCLKSEL                  ( 3'd1),
+		.PLLRSVD1                       (16'd0),
+		.PLLRSVD2                       ( 5'd0),
         
         .PLL0OUTCLK                     (qpll_qplloutclk[0]),
-        .PLL1OUTCLK                     (),
+		.PLL1OUTCLK                     (),
         .PLL0OUTREFCLK                  (qpll_qplloutrefclk[0]),
-        .PLL1OUTREFCLK                  (),
+		.PLL1OUTREFCLK                  (),
         .PLL0LOCK                       (qpll_qplllock[0]),
-        .PLL1LOCK                       (),
-        .PLL0FBCLKLOST                  (),
-        .PLL1FBCLKLOST                  (),
-        .PLL0REFCLKLOST                 (),
-        .PLL1REFCLKLOST                 (),
-        .DMONITOROUT                    (),
-        //Reset 
-        .PLL0PD                         (cpllpd_wait[95]),
-        .PLL1PD                         ( 1'd1),
-        .PLL0RESET                      (cpllreset_wait[127] | rst_cpllreset),
-        .PLL1RESET                      ( 1'd1),
-        //DRP 
-		.DRPCLK                         (0),
-		.DRPADDR                        (0),
-		.DRPEN                          (0),
-		.DRPDI                          (0),
-		.DRPWE                          (0),
-		.DRPDO                          (), 
-		.DRPRDY                         (),
-        //Band Gap
-        .BGBYPASSB                      ( 1'd1), 
-        .BGMONITORENB                   ( 1'd1), 
-        .BGPDB                          ( 1'd1), 
-        .BGRCALOVRD                     ( 5'd31),
-        .BGRCALOVRDENB                  ( 1'd1),
-        //MISC 
-        .PMARSVD                        ( 8'd0),
-        .RCALENB                        ( 1'd1),
+		.PLL1LOCK                       (),
+		.PLL0FBCLKLOST                  (),
+		.PLL1FBCLKLOST                  (),
+		.PLL0REFCLKLOST                 (),
+		.PLL1REFCLKLOST                 (),
+		.DMONITOROUT                    (),
+		//Reset 
+		// TODO PLL0PD and PLL0RESET also !
+		//.PLL0PD                         (cpllpd_wait[95]),
+		.PLL0PD                         (0),
+		.PLL1PD                         ( 1'd1),
+		//.PLL0RESET                      (cpllreset_wait[127] | rst_cpllreset),
+		.PLL0RESET                      (0),
+		.PLL1RESET                      ( 1'd1),
+		////DRP -> TODO This DRP is causing no wire found for port on CHANNEL
+		//.DRPCLK                         (0),
+		//.DRPADDR                        (0),
+		//.DRPEN                          (0),
+		//.DRPDI                          (0),
+		//.DRPWE                          (0),
+		//.DRPDO                          (), 
+		//.DRPRDY                         (),
+		//Band Gap
+		.BGBYPASSB                      ( 1'd1), 
+		.BGMONITORENB                   ( 1'd1), 
+		.BGPDB                          ( 1'd1), 
+		.BGRCALOVRD                     ( 5'd31),
+		.BGRCALOVRDENB                  ( 1'd1),
+		//MISC 
+		.PMARSVD                        ( 8'd0),
+		.RCALENB                        ( 1'd1),
                                                 
-        .REFCLKOUTMONITOR0              (),
-        .REFCLKOUTMONITOR1              (),
+		.REFCLKOUTMONITOR0              (),
+		.REFCLKOUTMONITOR1              (),
         .PMARSVDOUT                     ()
     );
     GTPE2_CHANNEL # (
@@ -660,7 +671,7 @@ module pipe_wrapper # (
       //.TXPI_INVSTROBE_SEL             ( 1'd0),
       //.TXPI_PPMCLK_SEL                ("TXUSRCLK2"),
       //.TXPI_PPM_CFG                   ( 8'd0),
-      //.TXPI_SYNFREQ_PPM               ( 3'd0),
+	  .TXPI_SYNFREQ_PPM               ( 3'd1), // TODO: this is set away from 0 for openxc7
                                                                                                                                
         //RX PI
         .RXPI_CFG0                      ( 3'd0),                                // Changed from 3 to 2-bits, Optimized for IES 
@@ -823,281 +834,281 @@ module pipe_wrapper # (
         .CFOK_CFG5                      ( 2'd0),                                // GTP new, Optimized for IES
         .CFOK_CFG6                      ( 4'd0)                                 // GTP new, Optimized for IES
      )gtpe2_channel_i(
-        //Clock 
-        .PLL0CLK                        (qpll_qplloutclk[0]),
-        .PLL1CLK                        (1'd0),
-        .PLL0REFCLK                     (qpll_qplloutrefclk[0]),
-        .PLL1REFCLK                     (1'd0),
-        .TXUSRCLK                       (PIPE_PCLK_IN),
-        .RXUSRCLK                       (PIPE_RXUSRCLK_IN),
-        .TXUSRCLK2                      (PIPE_PCLK_IN),
-        .RXUSRCLK2                      (PIPE_RXUSRCLK_IN),
-        .TXSYSCLKSEL                    (0),
-        .RXSYSCLKSEL                    (0),
-        .TXOUTCLKSEL                    (3'd3),
-        .RXOUTCLKSEL                    (3'b0),
-        .CLKRSVD0                       (1'd0),
-        .CLKRSVD1                       (1'd0),
-                                                                                
-        .TXOUTCLK                       (PIPE_TXOUTCLK_OUT),
-        .RXOUTCLK                       (),
-        .TXOUTCLKFABRIC                 (),
-        .RXOUTCLKFABRIC                 (),
-        .TXOUTCLKPCS                    (),
-        .RXOUTCLKPCS                    (),
-        .RXCDRLOCK                      (),
-        //Reset 
-        .TXUSERRDY                      (rst_userrdy),
-        .RXUSERRDY                      (rst_userrdy),
-        .CFGRESET                       (1'd0),
-        .GTRESETSEL                     (1'd0),
-        .RESETOVRD                      (0),
-        .GTTXRESET                      (rst_gtreset),
-        .GTRXRESET                      (rst_gtreset),
-                                                                               
-        .TXRESETDONE                    (gt_txresetdone),
-        .RXRESETDONE                    (gt_rxresetdone),
-        //TX Data 
-        .TXDATA                         (PIPE_TXDATA[31:0]),
-        .TXCHARISK                      (PIPE_TXDATAK[3:0]),
-        .GTPTXP                         (PIPE_TXP[0]),
-        .GTPTXN                         (PIPE_TXN[0]),
-        //RX Data 
+		//Clock 
+		.PLL0CLK                        (qpll_qplloutclk[0]),
+		.PLL1CLK                        (1'd0),
+		.PLL0REFCLK                     (qpll_qplloutrefclk[0]),
+		.PLL1REFCLK                     (1'd0),
+		.TXUSRCLK                       (PIPE_PCLK_IN),
+		.RXUSRCLK                       (PIPE_RXUSRCLK_IN),
+		.TXUSRCLK2                      (PIPE_PCLK_IN),
+		.RXUSRCLK2                      (PIPE_RXUSRCLK_IN),
+		.TXSYSCLKSEL                    (0),
+		.RXSYSCLKSEL                    (0),
+		.TXOUTCLKSEL                    (2'd3),
+		.RXOUTCLKSEL                    (2'b0),
+		.CLKRSVD0                       (1'd0),
+		.CLKRSVD1                       (1'd0),
+																				
+		.TXOUTCLK                       (PIPE_TXOUTCLK_OUT),
+		.RXOUTCLK                       (),
+		.TXOUTCLKFABRIC                 (),
+		.RXOUTCLKFABRIC                 (),
+		.TXOUTCLKPCS                    (),
+		.RXOUTCLKPCS                    (),
+		.RXCDRLOCK                      (),
+		//Reset 
+		.TXUSERRDY                      (rst_userrdy),
+		.RXUSERRDY                      (rst_userrdy),
+		.CFGRESET                       (1'd0),
+		.GTRESETSEL                     (1'd0),
+		.RESETOVRD                      (0),
+		.GTTXRESET                      (rst_gtreset),
+		.GTRXRESET                      (rst_gtreset),
+																			   
+		.TXRESETDONE                    (gt_txresetdone),
+		.RXRESETDONE                    (gt_rxresetdone),
+		//TX Data 
+		.TXDATA                         (PIPE_TXDATA[31:0]),
+		.TXCHARISK                      (PIPE_TXDATAK[3:0]),
+		.GTPTXP                         (PIPE_TXP[0]),
+		.GTPTXN                         (PIPE_TXN[0]),
+		//RX Data 
 		.GTPRXP                         (PIPE_RXP[0]),
-        .GTPRXN                         (PIPE_RXN[0]),
-        .RXDATA                         (PIPE_RXDATA[31:0]),
-        .RXCHARISK                      (PIPE_RXDATAK[3:0]),
-        //Command                
-        .TXDETECTRX                     (PIPE_TXDETECTRX),
-        .TXPDELECIDLEMODE               ( 1'd0),
-        .RXELECIDLEMODE                 ( 2'd0),
-        .TXELECIDLE                     (PIPE_TXELECIDLE[0]),
-        .TXCHARDISPMODE                 ({3'd0, PIPE_TXCOMPLIANCE[0]}),// Changed from 8 to 4-bits
-        .TXCHARDISPVAL                  ( 4'd0),                       // Changed from 8 to 4-bits
-        .TXPOLARITY                     ( 1'b0),
-        .RXPOLARITY                     (PIPE_RXPOLARITY[0]),
-        .TXPD                           (PIPE_POWERDOWN[1:0]),
-        .RXPD                           (PIPE_POWERDOWN[1:0]),
-        .TXRATE                         (0),       // always zero...
-        .RXRATE                         (0),
-        .TXRATEMODE                     (1'b0),
-        .RXRATEMODE                     (1'b0),
-        //Electrical Command                
-        .TXMARGIN                       (PIPE_TXMARGIN),
-        .TXSWING                        (PIPE_TXSWING),
-        .TXDEEMPH                       (PIPE_TXDEEMPH[0]),
-        .TXINHIBIT                      (0),
-        .TXBUFDIFFCTRL                  (3'b100),
-        .TXDIFFCTRL                     (4'b1100), // Select 850mV 
-        .TXPRECURSOR                    (0),
-        .TXPRECURSORINV                 (1'd0),
-        .TXMAINCURSOR                   (0),
-        .TXPOSTCURSOR                   (0),
-        .TXPOSTCURSORINV                (1'd0),
-        //Status                
-        .RXVALID                        (gt_rxvalid[0]),
-        .PHYSTATUS                      (gt_phystatus[0]),
-        .RXELECIDLE                     (PIPE_RXELECIDLE),
-        .RXSTATUS                       (PIPE_RXSTATUS),
-        .TXRATEDONE                     (gt_txratedone[0]),
-        .RXRATEDONE                     (gt_rxratedone[0]),
-        //DRP                
-        .DRPCLK                         (PIPE_DCLK_IN),
-        .DRPADDR                        (9'h011),
-        .DRPEN                          (drp_en[0]),
-        .DRPDI                          (drp_di[15:0]),
-        .DRPWE                          (drp_we[0]),
-                                                                                
-        .DRPDO                          (drp_do[15:0]),
-        .DRPRDY                         (drp_rdy[0]),
-        //PMA 
-        .TXPMARESET                     (0),
-        .RXPMARESET                     (0),
-        .RXLPMRESET                     ( 1'd0), // GTP new  
-        .RXLPMOSINTNTRLEN               ( 1'd0), // GTP new   
-        .RXLPMHFHOLD                    ( 1'd0),
-        .RXLPMHFOVRDEN                  ( 1'd0),
-        .RXLPMLFHOLD                    ( 1'd0),
-        .RXLPMLFOVRDEN                  ( 1'd0),
-        .PMARSVDIN0                     ( 1'd0), // GTP new 
-        .PMARSVDIN1                     ( 1'd0), // GTP new 
-        .PMARSVDIN2                     ( 1'd0), // GTP new  
-        .PMARSVDIN3                     ( 1'd0), // GTP new 
-        .PMARSVDIN4                     ( 1'd0), // GTP new 
-        .GTRSVD                         (16'd0),
-              
-        .PMARSVDOUT0                    (), // GTP new
-        .PMARSVDOUT1                    (), // GTP new                                                                       
-        .DMONITOROUT                    (), // GTP 15-bits 
-                                                                              
-        //PCS 
-        .TXPCSRESET                     (0),
-        .RXPCSRESET                     (0),
-        .PCSRSVDIN                      (16'd0), // [0]: 1 = TXRATE async, [1]: 1 = RXRATE async    
-        
-        .PCSRSVDOUT                     (),
-        //CDR 
-        .RXCDRRESET                     (0),
-        .RXCDRRESETRSV                  (1'd0),
-        .RXCDRFREQRESET                 (0),
-        .RXCDRHOLD                      (1'b0),
-        .RXCDROVRDEN                    (1'd0),
-        //PI 
-        .TXPIPPMEN                      (1'd0),
-        .TXPIPPMOVRDEN                  (1'd0),
-        .TXPIPPMPD                      (1'd0),
-        .TXPIPPMSEL                     (1'd0),
-        .TXPIPPMSTEPSIZE                (5'd0),
-        .TXPISOPD                       (1'd0),                                 // GTP new
-        //DFE 
-        .RXDFEXYDEN                     (1'd0),
-        //OS 
-        .RXOSHOLD                       (1'd0),    // Optimized for IES
-        .RXOSOVRDEN                     (1'd0),    // Optimized for IES                          
-        .RXOSINTEN                      (1'd1),    // Optimized for IES           
-        .RXOSINTHOLD                    (1'd0),    // Optimized for IES                                                                                                      
-        .RXOSINTNTRLEN                  (1'd0),    // Optimized for IES           
-        .RXOSINTOVRDEN                  (1'd0),    // Optimized for IES            
-        .RXOSINTPD                      (1'd0),    // GTP new, Optimized for IES             
-        .RXOSINTSTROBE                  (1'd0),    // Optimized for IES           
-        .RXOSINTTESTOVRDEN              (1'd0),    // Optimized for IES           
-        .RXOSINTCFG                     (4'b0010), // Optimized for IES                     
-        .RXOSINTID0                     (4'd0),    // Optimized for IES
-                                  
-        .RXOSINTDONE                    (),
-        .RXOSINTSTARTED                 (),
-        .RXOSINTSTROBEDONE              (),
-        .RXOSINTSTROBESTARTED           (),
-                                                                                
-        //Eye Scan                
-        .EYESCANRESET                   (0),
-        .EYESCANMODE                    (1'd0),
-        .EYESCANTRIGGER                 (1'b0),
-                                                                                
-        .EYESCANDATAERROR               (),
-                                                                                
-        //TX Buffer                
-        .TXBUFSTATUS                    (),
-                                                                                
-        //RX Buffer                
-        .RXBUFRESET                     (0),
-        
-        .RXBUFSTATUS                    (),
-                                                                                
-        //TX Sync                
-        .TXPHDLYRESET                   (0),
-        .TXPHDLYTSTCLK                  (1'd0),
-        .TXPHALIGN                      (sync_txphalign[0]),
-        .TXPHALIGNEN                    (1),    //  enable!
-        .TXPHDLYPD                      (1'd0),
-        .TXPHINIT                       (sync_txphinit[0]),
-        .TXPHOVRDEN                     (1'd0),
-        .TXDLYBYPASS                    (0),
-        .TXDLYSRESET                    (sync_txdlysreset[0]),
-        .TXDLYEN                        (sync_txdlyen[0]),
-        .TXDLYOVRDEN                    (1'd0),
-        .TXDLYHOLD                      (1'd0),
-        .TXDLYUPDOWN                    (1'd0),
-                                                                                
-        .TXPHALIGNDONE                  (PIPE_TXPHALIGNDONE),
-        .TXPHINITDONE                   (PIPE_TXPHINITDONE),
-        .TXDLYSRESETDONE                (PIPE_TXDLYSRESETDONE),
-        
-        .TXSYNCMODE                     (1),
-        .TXSYNCIN                       (gt_txsyncout[0]),
-        .TXSYNCALLIN                    (&PIPE_TXPHALIGNDONE),
-        
-        .TXSYNCDONE                     (gt_txsyncdone[0]),
-        .TXSYNCOUT                      (gt_txsyncout[0]),
-        
-        //RX Sync 
-        .RXPHDLYRESET                   (1'd0),
-        .RXPHALIGN                      (),    
-        .RXPHALIGNEN                    (0),   
-        .RXPHDLYPD                      (1'd0),
-        .RXPHOVRDEN                     (1'd0),
-        .RXDLYBYPASS                    (1),
-        .RXDLYSRESET                    (0),
-        .RXDLYEN                        (0),
-        .RXDLYOVRDEN                    (1'd0),
-        .RXDDIEN                        (0),
-                                                                                
-        .RXPHALIGNDONE                  (),
-        .RXPHMONITOR                    (),
-        .RXPHSLIPMONITOR                (),
-        .RXDLYSRESETDONE                (),
+		.GTPRXN                         (PIPE_RXN[0]),
+		.RXDATA                         (PIPE_RXDATA[31:0]),
+		.RXCHARISK                      (PIPE_RXDATAK[3:0]),
+		//Command                
+		.TXDETECTRX                     (PIPE_TXDETECTRX),
+		.TXPDELECIDLEMODE               ( 1'd0),
+		.RXELECIDLEMODE                 ( 2'd0),
+		.TXELECIDLE                     (PIPE_TXELECIDLE[0]),
+		.TXCHARDISPMODE                 ({3'd0, PIPE_TXCOMPLIANCE[0]}),// Changed from 8 to 4-bits
+		.TXCHARDISPVAL                  ( 4'd0),                       // Changed from 8 to 4-bits
+		.TXPOLARITY                     ( 1'b0),
+		.RXPOLARITY                     (PIPE_RXPOLARITY[0]),
+		.TXPD                           (PIPE_POWERDOWN[1:0]),
+		.RXPD                           (PIPE_POWERDOWN[1:0]),
+		.TXRATE                         (0),       // always zero...
+		.RXRATE                         (1'd0),
+		.TXRATEMODE                     (1'b0),
+		.RXRATEMODE                     (1'b0),
+		//Electrical Command                
+		.TXMARGIN                       (PIPE_TXMARGIN),
+		.TXSWING                        (PIPE_TXSWING),
+		.TXDEEMPH                       (PIPE_TXDEEMPH[0]),
+		.TXINHIBIT                      (0),
+		.TXBUFDIFFCTRL                  (3'd4),
+		.TXDIFFCTRL                     (4'b1100), // Select 850mV 
+		.TXPRECURSOR                    (1'd0), // * if changed this, nextpnr will complain a lot
+		.TXPRECURSORINV                 (1'd0),
+		.TXMAINCURSOR                   (1'd0), // *
+		.TXPOSTCURSOR                   (0),
+		.TXPOSTCURSORINV                (1'd0),
+		//Status                
+		.RXVALID                        (gt_rxvalid[0]),
+		.PHYSTATUS                      (gt_phystatus[0]),
+		.RXELECIDLE                     (PIPE_RXELECIDLE),
+		.RXSTATUS                       (PIPE_RXSTATUS),
+		.TXRATEDONE                     (gt_txratedone[0]),
+		.RXRATEDONE                     (gt_rxratedone[0]),
+		//DRP TODO: openxc7 doesn't support this yet, but no problem
+		//.DRPCLK                         (PIPE_DCLK_IN),
+		//.DRPADDR                        (9'h011),
+		.DRPEN                          (0 & drp_en[0]),
+		//.DRPDI                          (drp_di[15:0]),
+		//.DRPWE                          (drp_we[0]),
+																				
+		//.DRPDO                          (drp_do[15:0]),
+		//.DRPRDY                         (drp_rdy[0]),
+		//PMA 
+		.TXPMARESET                     (0),
+		.RXPMARESET                     (0),
+		.RXLPMRESET                     ( 1'd0), // GTP new  
+		.RXLPMOSINTNTRLEN               ( 1'd0), // GTP new   
+		.RXLPMHFHOLD                    ( 1'd0),
+		.RXLPMHFOVRDEN                  ( 1'd0),
+		.RXLPMLFHOLD                    ( 1'd0),
+		.RXLPMLFOVRDEN                  ( 1'd0),
+		.PMARSVDIN0                     ( 1'd0), // GTP new 
+		.PMARSVDIN1                     ( 1'd0), // GTP new 
+		.PMARSVDIN2                     ( 1'd0), // GTP new  
+		.PMARSVDIN3                     ( 1'd0), // GTP new 
+		.PMARSVDIN4                     ( 1'd0), // GTP new 
+		.GTRSVD                         (16'd0),
+			  
+		.PMARSVDOUT0                    (), // GTP new
+		.PMARSVDOUT1                    (), // GTP new                                                                       
+		.DMONITOROUT                    (), // GTP 15-bits 
+																			  
+		//PCS 
+		.TXPCSRESET                     (0),
+		.RXPCSRESET                     (0),
+		.PCSRSVDIN                      (16'd0), // [0]: 1 = TXRATE async, [1]: 1 = RXRATE async    
+		
+		.PCSRSVDOUT                     (),
+		//CDR 
+		.RXCDRRESET                     (0),
+		.RXCDRRESETRSV                  (1'd0),
+		.RXCDRFREQRESET                 (0),
+		.RXCDRHOLD                      (1'b0),
+		.RXCDROVRDEN                    (1'd0),
+		//PI 
+		.TXPIPPMEN                      (1'd0),
+		.TXPIPPMOVRDEN                  (1'd0),
+		.TXPIPPMPD                      (1'd0),
+		.TXPIPPMSEL                     (1'd0),
+		.TXPIPPMSTEPSIZE                (5'd0),
+		.TXPISOPD                       (1'd0),                                 // GTP new
+		//DFE 
+		.RXDFEXYDEN                     (1'd0),
+		//OS 
+		.RXOSHOLD                       (1'd0),    // Optimized for IES
+		.RXOSOVRDEN                     (1'd0),    // Optimized for IES                          
+		.RXOSINTEN                      (1'd1),    // Optimized for IES           
+		.RXOSINTHOLD                    (1'd0),    // Optimized for IES                                                                                                      
+		.RXOSINTNTRLEN                  (1'd0),    // Optimized for IES           
+		.RXOSINTOVRDEN                  (1'd0),    // Optimized for IES            
+		.RXOSINTPD                      (1'd0),    // GTP new, Optimized for IES             
+		.RXOSINTSTROBE                  (1'd0),    // Optimized for IES           
+		.RXOSINTTESTOVRDEN              (1'd0),    // Optimized for IES           
+		.RXOSINTCFG                     (4'b0010), // Optimized for IES                     
+		.RXOSINTID0                     (4'd0),    // Optimized for IES
+								  
+		.RXOSINTDONE                    (),
+		.RXOSINTSTARTED                 (),
+		.RXOSINTSTROBEDONE              (),
+		.RXOSINTSTROBESTARTED           (),
+																				
+		//Eye Scan                
+		.EYESCANRESET                   (0),
+		.EYESCANMODE                    (1'd0),
+		.EYESCANTRIGGER                 (1'b0),
+																				
+		.EYESCANDATAERROR               (),
+																				
+		//TX Buffer                
+		.TXBUFSTATUS                    (),
+																				
+		//RX Buffer                
+		.RXBUFRESET                     (0),
+		
+		.RXBUFSTATUS                    (),
+																				
+		//TX Sync                
+		.TXPHDLYRESET                   (0),
+		.TXPHDLYTSTCLK                  (1'd0),
+		.TXPHALIGN                      (sync_txphalign[0]),
+		.TXPHALIGNEN                    (1),    //  enable!
+		.TXPHDLYPD                      (1'd0),
+		.TXPHINIT                       (sync_txphinit[0]),
+		.TXPHOVRDEN                     (1'd0),
+		.TXDLYBYPASS                    (0),
+		.TXDLYSRESET                    (sync_txdlysreset[0]),
+		.TXDLYEN                        (sync_txdlyen[0]),
+		.TXDLYOVRDEN                    (1'd0),
+		.TXDLYHOLD                      (1'd0),
+		.TXDLYUPDOWN                    (1'd0),
+																				
+		.TXPHALIGNDONE                  (PIPE_TXPHALIGNDONE),
+		.TXPHINITDONE                   (PIPE_TXPHINITDONE),
+		.TXDLYSRESETDONE                (PIPE_TXDLYSRESETDONE),
+		
+		.TXSYNCMODE                     (1),
+		.TXSYNCIN                       (gt_txsyncout[0]),
+		.TXSYNCALLIN                    (&PIPE_TXPHALIGNDONE),
+		
+		.TXSYNCDONE                     (gt_txsyncdone[0]),
+		.TXSYNCOUT                      (gt_txsyncout[0]),
+		
+		//RX Sync 
+		.RXPHDLYRESET                   (1'd0),
+		.RXPHALIGN                      (),    
+		.RXPHALIGNEN                    (0),   
+		.RXPHDLYPD                      (1'd0),
+		.RXPHOVRDEN                     (1'd0),
+		.RXDLYBYPASS                    (1),
+		.RXDLYSRESET                    (0),
+		.RXDLYEN                        (0),
+		.RXDLYOVRDEN                    (1'd0),
+		.RXDDIEN                        (0),
+																				
+		.RXPHALIGNDONE                  (),
+		.RXPHMONITOR                    (),
+		.RXPHSLIPMONITOR                (),
+		.RXDLYSRESETDONE                (),
 
-        .RXSYNCMODE                     (),
-        .RXSYNCIN                       (gt_rxsyncout[0]),
-        .RXSYNCALLIN                    (0),
-        
-        .RXSYNCDONE                     (),
-        .RXSYNCOUT                      (gt_rxsyncout[0]),
-        //Comma Alignment 
-        .RXCOMMADETEN                   (1'd1),
-        .RXMCOMMAALIGNEN                (1'd1),
-        .RXPCOMMAALIGNEN                (1'd1),
-        .RXSLIDE                        (0),
-        .RXCOMMADET                     (PIPE_RXCOMMADET),
-        .RXCHARISCOMMA                  (gt_rxchariscomma[3:0]),
-        .RXBYTEISALIGNED                (gt_rxbyteisaligned[0]),
-        .RXBYTEREALIGN                  (gt_rxbyterealign[0]),
-        //Channel Bonding 
-        .RXCHBONDEN                     (0),
-        .RXCHBONDI                      (0),
-        .RXCHBONDLEVEL                  (0),
-        .RXCHBONDMASTER                 (0),
-        .RXCHBONDSLAVE                  (0),
-        .RXCHANBONDSEQ                  (), 
-        .RXCHANISALIGNED                (PIPE_RXCHANISALIGNED[0]),
-        .RXCHANREALIGN                  (),
-        .RXCHBONDO                      (),
-        //Clock Correction  
-        .RXCLKCORCNT                    (),
-        //8b10b 
-        .TX8B10BBYPASS                  (4'd0),
-        .TX8B10BEN                      (1'b1),
-        .RX8B10BEN                      (1'b1),
-                                                                                
-        .RXDISPERR                      (),
-        .RXNOTINTABLE                   (),
-        //64b/66b & 64b/67b 
-        .TXHEADER                       (3'd0),
-        .TXSEQUENCE                     (7'd0),
-        .TXSTARTSEQ                     (1'd0),
-        .RXGEARBOXSLIP                  (1'd0),
-        .TXGEARBOXREADY                 (),
-        .RXDATAVALID                    (),
-        .RXHEADER                       (),
-        .RXHEADERVALID                  (),
-        .RXSTARTOFSEQ                   (),
-        //PRBS/Loopback 
-        .TXPRBSSEL                      (0),
-        .RXPRBSSEL                      (0),
-        .TXPRBSFORCEERR                 (0),
-        .RXPRBSCNTRESET                 (0),
-        .LOOPBACK                       (0),
-        .RXPRBSERR                      (), 
-        //OOB 
-        .SIGVALIDCLK                    (user_oobclk), // Optimized for debug           
-        .TXCOMINIT                      (1'd0),
-        .TXCOMSAS                       (1'd0),
-        .TXCOMWAKE                      (1'd0),
-        .RXOOBRESET                     (1'd0),
-        .TXCOMFINISH                    (),
-        .RXCOMINITDET                   (),
-        .RXCOMSASDET                    (),
-        .RXCOMWAKEDET                   (),
-        //MISC 
-        .SETERRSTATUS                   ( 1'd0),
-        .TXDIFFPD                       ( 1'd0),
-        .TSTIN                          (20'hFFFFF),
-        //GTP 
-        .RXADAPTSELTEST                 (14'd0),
-        .DMONFIFORESET                  ( 1'd0),
-        .DMONITORCLK                    (0),
-        .RXOSCALRESET                   ( 1'd0),
-        .RXPMARESETDONE                 (PIPE_RXPMARESETDONE),                    // GTP
+		.RXSYNCMODE                     (),
+		.RXSYNCIN                       (gt_rxsyncout[0]),
+		.RXSYNCALLIN                    (0),
+		
+		.RXSYNCDONE                     (),
+		.RXSYNCOUT                      (gt_rxsyncout[0]),
+		//Comma Alignment 
+		.RXCOMMADETEN                   (1'd1),
+		.RXMCOMMAALIGNEN                (1'd1),
+		.RXPCOMMAALIGNEN                (1'd1),
+		.RXSLIDE                        (0),
+		.RXCOMMADET                     (PIPE_RXCOMMADET),
+		.RXCHARISCOMMA                  (gt_rxchariscomma[3:0]),
+		.RXBYTEISALIGNED                (gt_rxbyteisaligned[0]),
+		.RXBYTEREALIGN                  (gt_rxbyterealign[0]),
+		//Channel Bonding 
+		.RXCHBONDEN                     (0),
+		.RXCHBONDI                      (0),
+		.RXCHBONDLEVEL                  (0),
+		.RXCHBONDMASTER                 (0),
+		.RXCHBONDSLAVE                  (0),
+		.RXCHANBONDSEQ                  (), 
+		.RXCHANISALIGNED                (PIPE_RXCHANISALIGNED[0]),
+		.RXCHANREALIGN                  (),
+		.RXCHBONDO                      (),
+		//Clock Correction  
+		.RXCLKCORCNT                    (),
+		//8b10b 
+		.TX8B10BBYPASS                  (4'd0),
+		.TX8B10BEN                      (1'b1),
+		.RX8B10BEN                      (1'b1),
+																				
+		.RXDISPERR                      (),
+		.RXNOTINTABLE                   (),
+		//64b/66b & 64b/67b 
+		.TXHEADER                       (3'd0),
+		.TXSEQUENCE                     (7'd0),
+		.TXSTARTSEQ                     (1'd0),
+		.RXGEARBOXSLIP                  (1'd0),
+		.TXGEARBOXREADY                 (),
+		.RXDATAVALID                    (),
+		.RXHEADER                       (),
+		.RXHEADERVALID                  (),
+		.RXSTARTOFSEQ                   (),
+		//PRBS/Loopback 
+		.TXPRBSSEL                      (0),
+		.RXPRBSSEL                      (0),
+		.TXPRBSFORCEERR                 (0),
+		.RXPRBSCNTRESET                 (0),
+		.LOOPBACK                       (0),
+		.RXPRBSERR                      (), 
+		//OOB 
+		.SIGVALIDCLK                    (user_oobclk), // Optimized for debug           
+		.TXCOMINIT                      (1'd0),
+		.TXCOMSAS                       (1'd0),
+		.TXCOMWAKE                      (1'd0),
+		.RXOOBRESET                     (1'd0),
+		.TXCOMFINISH                    (),
+		.RXCOMINITDET                   (),
+		.RXCOMSASDET                    (),
+		.RXCOMWAKEDET                   (),
+		//MISC 
+		.SETERRSTATUS                   ( 1'd0),
+		.TXDIFFPD                       ( 1'd0),
+		.TSTIN                          (20'hFFFFF),
+		//GTP 
+		.RXADAPTSELTEST                 (14'd0),
+		.DMONFIFORESET                  ( 1'd0),
+		.DMONITORCLK                    (0),
+		.RXOSCALRESET                   ( 1'd0),
+		.RXPMARESETDONE                 (PIPE_RXPMARESETDONE),                    // GTP
         .TXPMARESETDONE                 ()
      );         
 
