@@ -231,7 +231,7 @@ wire pcie_core_ready =
         (tlp_common_type == MEM_WR) ? pcie_core_tx_ready :
         (tlp_common_type == MEM_RD) ? pcie_core_rx_ready : 1'b1;
         
-wire pcie_b256_single_dw = s_axis_rx_tlast && !s_axis_rx_tkeep[5];
+wire pcie_b256_single_dw = s_axis_rx_tlast ;//&& !s_axis_rx_tkeep[5]; // s_axis_rx_tkeep[5] doesn't exist. It causes problem with nextpnr
 assign s_axis_rx_tready = (state == TX_RESET && ((BUS_WIDTH == 256 ? pcie_b256_single_dw : 1'b1) && pcie_core_ready)) ||
                           (state == TX_SKIP)   ||
                           (state == TX_HDR2_TX32 || state == TX_HDR2_TX64)   ||

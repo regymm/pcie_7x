@@ -14,6 +14,22 @@ module pcie_four_brams (
 	input  [12:0]  raddr,
 	output [71:0]  rdata
 );
+	reg [71:0]rdata0;
+	reg [71:0]rdata1;
+    // TODO: before nextpnr-xilinx BRAM support is investigated, use dist. ram instead. 
+	(* ram_style = "distributed" *) reg [71:0]ram[2**11-1:0]; // VC0_RX_RAM_LIMIT 7FF -> 11 bits
+	always @ (posedge user_clk_i) begin
+		if (wen)
+			ram[waddr] <= wdata;
+		if (ren)
+			//if (waddr != raddr)
+				rdata0 <= ram[raddr];
+			//else
+				//rdata0 <= wdata;
+		rdata1 <= rdata0;
+	end
+	assign rdata = rdata1;
+	/*
 	one_bram ramb36_0(
 		.DOA            (),
 		.DOB            (rdata[17:0]),
@@ -86,6 +102,7 @@ module pcie_four_brams (
 		.WEA            (2'b11),
 		.WEB            (2'b00)
 	);
+	*/
 endmodule
 
 module one_bram(DOA, DOB, ADDRA, ADDRB, CLKA, CLKB, DIA, DIB, ENA, ENB, REGCEA, REGCEB, RSTA, RSTB, WEA, WEB);
@@ -124,8 +141,8 @@ module one_bram(DOA, DOB, ADDRA, ADDRB, CLKA, CLKB, DIA, DIB, ENA, ENB, REGCEA, 
   ) bram36_tdp_bl (
     .ADDRARDADDR({ 1'h1, ADDRA, 4'hf }),
     .ADDRBWRADDR({ 1'h1, ADDRB, 4'hf }),
-    .CASCADEINA(1'h0),
-    .CASCADEINB(1'h0),
+    //.CASCADEINA(1'h0),
+    //.CASCADEINB(1'h0),
     .CLKARDCLK(CLKA),
     .CLKBWRCLK(CLKB),
     .DIADI({ DIA[16:9], DIA[7:0] }),

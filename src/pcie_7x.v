@@ -419,7 +419,9 @@ module pcie_7x # (
 	input    [4:0]                              cfg_pciecap_interrupt_msgnum,
 
 	input                                       sys_clk,
-	input                                       sys_rst_n
+	input                                       sys_rst_n,
+	output   [4:0]                              gt_reset_fsm,
+	output   [5:0]                              pl_ltssm_state
 );
 
 wire trn_lnk_up;
@@ -441,6 +443,10 @@ always @(posedge user_clk_out) begin
 		bridge_reset_d <= bridge_reset_int;
 	end
 end
+
+wire PIPE_PCLK_IN;
+wire PIPE_USERCLK1_IN;
+wire PIPE_USERCLK2_IN;
 
 reg reg_clock_locked;
 always @(posedge PIPE_PCLK_IN or negedge clock_locked) begin
@@ -469,7 +475,7 @@ wire [15:0]          cfg_dev_id         = CFG_DEV_ID;
 wire [7:0]           cfg_rev_id         = CFG_REV_ID;
 wire [15:0]          cfg_subsys_vend_id = CFG_SUBSYS_VEND_ID;
 wire [15:0]          cfg_subsys_id      = CFG_SUBSYS_ID;
-wire [5:0]           pl_ltssm_state;
+//wire [5:0]           pl_ltssm_state;
 pcie_block # (
     .AER_BASE_PTR                             ( AER_BASE_PTR ),
     .AER_CAP_ECRC_CHECK_CAPABLE               ( AER_CAP_ECRC_CHECK_CAPABLE ),
@@ -953,7 +959,7 @@ pcie_block # (
     .pl_directed_link_auton                     ( 2'b0 ),
     .pl_directed_link_change                    ( 2'b0 ),
     .pl_directed_link_speed                     ( 2'b0 ),
-    .pl_directed_link_width                     ( 2'b0 ),
+    .pl_directed_link_width                     ( 2'b0 ), // default is 0, 2b11 specifies x1
     .pl_downstream_deemph_source                ( 1'b1 ), // ??? passed zero?
     .pl_upstream_prefer_deemph                  ( 1'b1 ),
     .pl_transmit_hot_rst                        ( 1'b0 ),
@@ -1028,21 +1034,23 @@ wire [0:0]                         phystatus_rst                ;
 wire                               clock_locked                 ;
 
 // clock for pipe
-pipe_clock # (
-	.PCIE_USERCLK1_FREQ             ( PCIE_USERCLK1_FREQ ),
-	.PCIE_USERCLK2_FREQ             ( PCIE_USERCLK2_FREQ )
+xilinx_pci_mmcm # (
+	.PCIE_USERCLK_FREQ              ( PCIE_USERCLK1_FREQ ),
+	.PCIE_LANE                      ( 1 ),
+	.PCIE_LINK_SPEED                ( 1 )
 ) pipe_clock_i (
-	.CLK_TXOUTCLK                   ( PIPE_TXOUTCLK_OUT), // Reference clock from lane 0
-	.CLK_RST_N                      ( pipe_mmcm_rst_n ), // Allow system reset for error_recovery             
-
-	.CLK_PCLK                       ( PIPE_PCLK_IN),
-	.CLK_RXUSRCLK                   ( PIPE_RXUSRCLK_IN),
-	.CLK_DCLK                       ( PIPE_DCLK_IN),
-	.CLK_OOBCLK                     ( PIPE_OOBCLK_IN),
-	.CLK_USERCLK1                   ( PIPE_USERCLK1_IN),
-	.CLK_USERCLK2                   ( PIPE_USERCLK2_IN),
-	.CLK_MMCM_LOCK                  ( PIPE_MMCM_LOCK_IN)
+	.refclk_i                       ( PIPE_TXOUTCLK_OUT), // Reference clock from lane 0
+	.rst_n_i                        ( pipe_mmcm_rst_n ), // Allow system reset for error_recovery             
+	.refclk_sel_i                   ( 0 ),
+	.pclk_sel_i                     ( 0 ),
+	.pclk_o                         ( PIPE_PCLK_IN ),
+	.dclk_o                         ( PIPE_DCLK_IN ),
+	.userclk_o                      ( PIPE_USERCLK1_IN ),
+	.mmcm_lock_o                    ( PIPE_MMCM_LOCK_IN )
 );
+assign PIPE_USERCLK2_IN = PIPE_USERCLK1_IN;
+assign PIPE_RXUSRCLK_IN = PIPE_DCLK_IN;
+assign PIPE_OOBCLK_IN = PIPE_DCLK_IN;
 
 localparam USERCLK2_FREQ   =  (USER_CLK2_DIV2 == "FALSE") ? USER_CLK_FREQ :
 										(USER_CLK_FREQ == 4) ? 3 :
@@ -1126,13 +1134,8 @@ pipe_wrapper # (
 	.PIPE_DCLK_IN                   ( PIPE_DCLK_IN ),
 	.PIPE_OOBCLK_IN                 ( PIPE_OOBCLK_IN ),
 	.PIPE_MMCM_LOCK_IN              ( PIPE_MMCM_LOCK_IN ),
-	.PIPE_TXOUTCLK_OUT              ( PIPE_TXOUTCLK_OUT )
+	.PIPE_TXOUTCLK_OUT              ( PIPE_TXOUTCLK_OUT ),
+	.gt_reset_fsm                   (gt_reset_fsm)
 );
-//wire                 user_clk;
-//wire                 user_clk2;
-//wire                 pipe_clk;
-//assign user_clk = PIPE_USERCLK1_IN;
-//assign user_clk2 = PIPE_USERCLK2_IN;
-//assign pipe_clk = PIPE_PCLK_IN;
 endmodule
 

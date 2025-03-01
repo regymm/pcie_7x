@@ -7,13 +7,13 @@
 // external clock, not external GT
 module pcie_7x_aximm (
   (* X_INTERFACE_INFO = "xilinx.com:interface:pcie_7x_mgt:1.0 pcie_7x_mgt txp" *)
-  output      pci_exp_txp[0:0],
+  output      [0:0]pci_exp_txp,
   (* X_INTERFACE_INFO = "xilinx.com:interface:pcie_7x_mgt:1.0 pcie_7x_mgt txn" *)
-  output      pci_exp_txn[0:0],
+  output      [0:0]pci_exp_txn,
   (* X_INTERFACE_INFO = "xilinx.com:interface:pcie_7x_mgt:1.0 pcie_7x_mgt rxp" *)
-  input       pci_exp_rxp[0:0],
+  input       [0:0]pci_exp_rxp,
   (* X_INTERFACE_INFO = "xilinx.com:interface:pcie_7x_mgt:1.0 pcie_7x_mgt rxn" *)
-  input       pci_exp_rxn[0:0],
+  input       [0:0]pci_exp_rxn,
 
   // 100 MHz refclk in via BUFGDS
   input refclk,
@@ -255,8 +255,8 @@ assign rx_np_ok = 1'b1;                          // Allow Reception of Non-poste
 assign rx_np_req = 1'b1;                         // Always request Non-posted Traffic if available
 assign cfg_pm_wake = 1'b0;                       // Never direct the core to send a PM_PME Message
 assign cfg_trn_pending = 1'b0;                   // Never set the transaction pending bit in the Device Status Register
-assign cfg_pm_halt_aspm_l0s = 1'b0;              // Allow entry into L0s
-assign cfg_pm_halt_aspm_l1 = 1'b0;               // Allow entry into L1
+assign cfg_pm_halt_aspm_l0s = 1'b0;              // Allow entry into L0s (not allow)
+assign cfg_pm_halt_aspm_l1 = 1'b0;               // Allow entry into L1 (not allow)
 assign cfg_pm_force_state_en  = 1'b0;            // Do not qualify cfg_pm_force_state
 assign cfg_pm_force_state  = 2'b00;              // Do not move force core into specific PM state
 assign cfg_dsn = 64'h0000000101000a35;           // Assign the input DSN (Device Serial Number)

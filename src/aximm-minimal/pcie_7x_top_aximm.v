@@ -12,10 +12,46 @@ module pcie_7x_top_aximm # (
   input       pci_exp_rxp,
   input       pci_exp_rxn,
 
-  input                                       sys_clk_p,
-  input                                       sys_clk_n,
-  input                                       sys_rst_n
+  input       sys_clk_p,
+  input       sys_clk_n,
+  input       sys_rst_n,
+  
+  output      [3:0] led
 );
+  // basic state monitoring by LEDs
+  assign led = ~{2'b00, user_reset, user_lnk_up};
+  wire [4:0]gt_reset_fsm;
+  wire [5:0]pl_ltssm_state;
+  //assign led = ~pl_ltssm_state[3:0];
+  //assign led = ~pl_ltssm_state[5:2];
+  //assign led = ~gt_reset_fsm[3:0];
+  //reg fsm_was_4 = 0;
+  //reg fsm_was_5 = 0;
+  //reg fsm_was_6 = 0;
+  //reg fsm_was_7 = 0;
+  //wire pclk;
+  //assign led = ~{fsm_was_4, fsm_was_5, fsm_was_6, fsm_was_7};
+  //always @ (posedge pclk) begin
+	  //if (!sys_rst_n_c) begin
+		  //fsm_was_4 <= 0;
+		  //fsm_was_5 <= 0;
+		  //fsm_was_6 <= 0;
+		  //fsm_was_7 <= 0;
+	  //end else begin
+		  //if ( pl_ltssm_state == 6'h4) begin
+			  //fsm_was_4 <= 1;
+		  //end
+		  //if ( pl_ltssm_state == 6'h5) begin
+			  //fsm_was_5 <= 1;
+		  //end
+		  //if ( pl_ltssm_state == 6'h6) begin
+			  //fsm_was_6 <= 1;
+		  //end
+		  //if ( pl_ltssm_state == 6'h7) begin
+			  //fsm_was_7 <= 1;
+		  //end
+	  //end
+  //end
 
   wire                                        user_clk;
   wire                                        user_reset;
@@ -82,6 +118,7 @@ pcie_7x #
    (	 
     .PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ +1 ),
     .PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ +1 )
+//    .LINK_CAP_MAX_LINK_SPEED        ( 2 )
    ) 
 pcie_7x_i
   (
@@ -89,7 +126,7 @@ pcie_7x_i
   .pci_exp_txp                               ( pci_exp_txp ),
   .pci_exp_rxn                               ( pci_exp_rxn ),
   .pci_exp_rxp                               ( pci_exp_rxp ),
-  .pipe_mmcm_rst_n                            ( 1 ),        // Async      | Async
+  .pipe_mmcm_rst_n                            ( 1 ),
   // Common
   .user_clk_out                              ( user_clk ),
   .user_reset_out                            ( user_reset ),
@@ -153,8 +190,10 @@ pcie_7x_i
   .cfg_bus_number                            ( cfg_bus_number ),
   .cfg_device_number                         ( cfg_device_number ),
   .cfg_function_number                       ( cfg_function_number ),
-  .sys_clk                                    ( sys_clk ),
-  .sys_rst_n                                  ( sys_rst_n_c )
+  .sys_clk                                   ( sys_clk ),
+  .sys_rst_n                                 ( sys_rst_n_c ),
+  .gt_reset_fsm                              ( gt_reset_fsm ),
+  .pl_ltssm_state                            ( pl_ltssm_state )
 );
 
 `ifndef STOCK_APP
@@ -317,7 +356,7 @@ axil_minimum axil_minimum_inst (
 );
 `endif
 
-
+// default Vivado testing userapp
 `ifdef STOCK_APP
 pcie_app_7x  #(
   .C_DATA_WIDTH( C_DATA_WIDTH )
