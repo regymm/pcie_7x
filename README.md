@@ -43,7 +43,7 @@ For PCIE_2_1 parameters and port definitions, please refer to [UG477](https://do
 
 #### Supported Boards
 
-Alinx AC7100B SoM
+Alinx AC7100B SoM, Wavelet uSDR
 
 #### Funding
 

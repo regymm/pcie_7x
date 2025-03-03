@@ -847,7 +847,9 @@ module pcie_block # (
   wire [67:0] mim_rx_rdata;
   wire [3:0]  unused_mim_rx_rdata;
 
-  pcie_four_brams pcie_brams_tx (
+  pcie_four_brams #(
+    .DEPTH($clog2(VC0_RX_RAM_LIMIT+1))
+  ) pcie_brams_tx (
     .user_clk_i ( user_clk ),
     .reset_i    ( 1'b0 ),
     .waddr      ( mim_tx_waddr ),
@@ -858,7 +860,9 @@ module pcie_block # (
     .raddr      ( mim_tx_raddr ),
     .rdata      ( {unused_mim_tx_rdata, mim_tx_rdata} )
   );
-  pcie_four_brams pcie_brams_rx (
+  pcie_four_brams #(
+    .DEPTH($clog2(VC0_RX_RAM_LIMIT+1))
+  ) pcie_brams_rx (
     .user_clk_i ( user_clk ),
     .reset_i    ( 1'b0 ),
     .waddr      ( mim_rx_waddr ),

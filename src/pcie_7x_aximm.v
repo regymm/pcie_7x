@@ -117,8 +117,21 @@ module pcie_7x_aximm (
 
 pcie_7x #
    (	 
-    .PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ +1 ),
-    .PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ +1 )
+  .PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ +1 ),
+  .PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ +1 ),
+
+  // can reduce RAM usage (and performance) by tuning parameters
+  // results can be derived from 7 Series Integrated Block for PCI Express -
+  // Core Capabilities - BRAM Configuration Options, depending on Max Payload Size
+  .DEV_CAP_MAX_PAYLOAD_SUPPORTED  (1),
+  .VC0_RX_RAM_LIMIT               (13'h3FF),
+  .VC0_TOTAL_CREDITS_CD           (370),
+  .VC0_TOTAL_CREDITS_CH           (72),
+  .VC0_TOTAL_CREDITS_NPH          (4),
+  .VC0_TOTAL_CREDITS_NPD          (8),
+  .VC0_TOTAL_CREDITS_PD           (32),
+  .VC0_TOTAL_CREDITS_PH           (4),
+  .VC0_TX_LASTPACKET              (28)
    ) 
 pcie_7x_i
   (

@@ -5,7 +5,8 @@
 
 module pcie_7x_top_aximm # (
   parameter C_DATA_WIDTH        = 64, // RX/TX interface data width
-  parameter KEEP_WIDTH          = C_DATA_WIDTH / 8 // TSTRB width
+  parameter KEEP_WIDTH          = C_DATA_WIDTH / 8, // TSTRB width
+  parameter NO_RESET            = 0
 ) (
   output      pci_exp_txp,
   output      pci_exp_txn,
@@ -106,7 +107,19 @@ module pcie_7x_top_aximm # (
   localparam USER_CLK2_DIV2    = "FALSE";
   localparam USERCLK2_FREQ     = (USER_CLK2_DIV2 == "TRUE") ? (USER_CLK_FREQ == 4) ? 3 : (USER_CLK_FREQ == 3) ? 2 : USER_CLK_FREQ: USER_CLK_FREQ;
 
-  IBUF   sys_reset_n_ibuf (.O(sys_rst_n_c), .I(sys_rst_n));
+  generate if (NO_RESET) begin
+    reg [7:0]sys_rst_cnt = 0;
+    // should use sys_clk, but now openXC7 doesn't support using IBUFDS clock to ordinary logic. 
+    // since MMCM is never reset, user_clk is available from the beginning
+    always @ (posedge user_clk) begin 
+        if (!sys_rst_cnt[7])
+            sys_rst_cnt <= sys_rst_cnt + 1;
+    end
+    assign sys_rst_n_c = sys_rst_cnt[7];
+  end else begin
+    IBUF   sys_reset_n_ibuf (.O(sys_rst_n_c), .I(sys_rst_n));
+  end
+  endgenerate
   IBUFDS_GTE2 refclk_ibuf (.O(sys_clk), .ODIV2(), .I(sys_clk_p), .CEB(1'b0), .IB(sys_clk_n));
 
   always @(posedge user_clk) begin
@@ -114,14 +127,27 @@ module pcie_7x_top_aximm # (
     user_lnk_up_q <= user_lnk_up;
   end
 
-pcie_7x #
-   (	 
-    .PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ +1 ),
-    .PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ +1 )
-//    .LINK_CAP_MAX_LINK_SPEED        ( 2 )
-   ) 
-pcie_7x_i
-  (
+pcie_7x # (	 
+  .PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ +1 ),
+  .PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ +1 ),
+//  .LINK_CAP_MAX_LINK_SPEED        ( 2 )
+
+  .CFG_DEV_ID                     (16'h9998),
+  .BAR0                           (32'hFFFFF000),
+
+  // can reduce RAM usage (and performance) by tuning parameters
+  // results can be derived from 7 Series Integrated Block for PCI Express -
+  // Core Capabilities - BRAM Configuration Options, depending on Max Payload Size
+  .DEV_CAP_MAX_PAYLOAD_SUPPORTED  (1),
+  .VC0_RX_RAM_LIMIT               (13'h3FF),
+  .VC0_TOTAL_CREDITS_CD           (370),
+  .VC0_TOTAL_CREDITS_CH           (72),
+  .VC0_TOTAL_CREDITS_NPH          (4),
+  .VC0_TOTAL_CREDITS_NPD          (8),
+  .VC0_TOTAL_CREDITS_PD           (32),
+  .VC0_TOTAL_CREDITS_PH           (4),
+  .VC0_TX_LASTPACKET              (28)
+) pcie_7x_i (
   .pci_exp_txn                               ( pci_exp_txn ),
   .pci_exp_txp                               ( pci_exp_txp ),
   .pci_exp_rxn                               ( pci_exp_rxn ),
