@@ -13,7 +13,10 @@ module pcie_7x_top_aximm_usdr (
   
   output      [2:0] led
 );
-pcie_7x_top_aximm #(.NO_RESET(1)) pcie_7x_top_aximm_i (
+pcie_7x_top_aximm #(
+    .NO_RESET(1),
+    .ENABLE_GEN2(1)
+) pcie_7x_top_aximm_i (
   .pci_exp_txp(pci_exp_txp),
   .pci_exp_txn(pci_exp_txn),
   .pci_exp_rxp(pci_exp_rxp),

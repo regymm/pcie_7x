@@ -367,6 +367,59 @@ module pipe_wrapper # (
         txphaligndone_reg3 <= txphaligndone_reg2;
     end
 
+    wire pipe_rate_reg2;
+    reg pipe_rate_reg3;
+    wire gt_txratedone_reg3;
+    wire gt_rxratedone_reg3;
+    wire gt_txsyncdone_reg3;
+    two_beats #(.BEATS(3), .RSTVAL(0)) rate_beats (.clk(PIPE_PCLK_IN), .rst(0), .sig(PIPE_RATE[0]), .out(pipe_rate_reg2));
+    two_beats #(.BEATS(3), .RSTVAL(0)) txratedone_beats (.clk(PIPE_PCLK_IN), .rst(rst_cpllreset), .sig(gt_txratedone[0]), .out(gt_txratedone_reg3));
+    two_beats #(.BEATS(3), .RSTVAL(0)) rxratedone_beats (.clk(PIPE_PCLK_IN), .rst(rst_cpllreset), .sig(gt_rxratedone[0]), .out(gt_rxratedone_reg3));
+    two_beats #(.BEATS(3), .RSTVAL(0)) txsyncdone_beats (.clk(PIPE_PCLK_IN), .rst(rst_cpllreset), .sig(gt_txsyncdone[0]), .out(gt_txsyncdone_reg3));
+
+    reg txratedone_latch = 1'b0;
+    reg rxratedone_latch = 1'b0;
+    reg phystatus_latch = 1'b0;
+    reg [1:0]rate_txsync = 2'b0;
+    reg rate_done = 1'b0;
+    reg rate_idle = 1'b1;
+    //localparam RATE_IDLE = 0;
+    //localparam RATE_ = 0;
+    always @ (posedge PIPE_PCLK_IN) begin
+        pipe_rate_reg3 <= pipe_rate_reg2;
+        if (pipe_rate_reg2 & !pipe_rate_reg3) begin
+            txratedone_latch <= 1'b0;
+            rxratedone_latch <= 1'b0;
+            phystatus_latch <= 1'b0;
+            rate_txsync <= 2'b0;
+            rate_done <= 1'b0;
+            rate_idle <= 1'b0;
+        end else begin
+            if (gt_txratedone_reg3) txratedone_latch <= 1'b1;
+            if (gt_rxratedone_reg3) rxratedone_latch <= 1'b1;
+            if (phystatus_reg2) phystatus_latch <= 1'b1;
+            if (txratedone_latch & rxratedone_latch & phystatus_latch) begin
+                txratedone_latch <= 1'b0;
+                rxratedone_latch <= 1'b0;
+                phystatus_latch <= 1'b0;
+                rate_txsync <= 2'b01;
+            end else if (rate_txsync == 2'b01) begin
+                rate_txsync <= 2'b10;
+            end else if (rate_txsync == 2'b10) begin
+                if (fsm == FSM_IDLE) begin
+                    rate_txsync <= 2'b11;
+                end
+            end else if (rate_txsync == 2'b11) begin
+                rate_txsync <= 2'b00;
+                rate_done <= 1'b1;
+            end else if (rate_done) begin
+                rate_idle <= 1'b1;
+                rate_done <= 1'b0;
+            end
+            //if (ratedone)
+        end
+    end
+
     reg [5:0] cfg_wait_cnt =  6'd0;
     reg txdlyen = 1'd0;
 
@@ -378,7 +431,8 @@ module pipe_wrapper # (
             rst_userrdy  <= 1'd0;
             cfg_wait_cnt <= 6'd0;
             txdlyen <= 1'd0;
-        end else begin case (fsm)
+        end else begin
+            case (fsm)
             FSM_CFG_WAIT : begin
                 cfg_wait_cnt <= cfg_wait_cnt + 1;
                 if (cfg_wait_cnt == 6'd63) fsm <= FSM_PLLRESET;
@@ -476,6 +530,11 @@ module pipe_wrapper # (
                 end
             end     
             FSM_IDLE : begin
+                // we use the latter half of FSM also for rate change
+                if (rate_txsync == 2'b01) begin
+                    fsm <= FSM_TXSYNC_START;
+                    txdlyen <= 0;
+                end
             end
             endcase
         end
@@ -485,7 +544,7 @@ module pipe_wrapper # (
 	wire rxusrclk_rst_reg;
 	two_beats #(.BEATS(2), .RSTVAL(0)) drxusrclk_rst_beats (.clk(PIPE_RXUSRCLK_IN), .rst(0), .sig(rst_cpllreset), .out(rst_rxusrclk_reset));
 	assign rst_txsync_start = fsm == FSM_TXSYNC_START;
-	assign rst_idle = fsm == FSM_IDLE;
+	assign rst_idle = fsm == FSM_IDLE || PIPE_RATE[0]; // TODO: finer judgement
 	always @ (posedge PIPE_PCLK_IN) begin
 		rst_drp_start <= fsm == FSM_DRP_X16_START || fsm == FSM_DRP_X20_START;
 		rst_drp_x16 <= fsm == FSM_DRP_X16_START || fsm == FSM_DRP_X16_DONE;
@@ -516,7 +575,7 @@ module pipe_wrapper # (
 	end
 	// rst_idle: 2 beats at USER_RXUSRCLK, and 0 when !user_rxusrclk_rst_n
 	assign PIPE_RXVALID[0] = rst_idle_reg && rxvalid_cnt[4]; // removed & rxvalid[0]
-	assign PIPE_PHYSTATUS[0] = !rst_idle_reg || gt_phystatus[0];
+	assign PIPE_PHYSTATUS[0] = !rst_idle_reg || (rate_idle && gt_phystatus[0]) || rate_done;
 	assign PIPE_PHYSTATUS_RST[0] = !rst_idle_reg;
     
 	reg user_oobclk = 0;
@@ -975,8 +1034,8 @@ module pipe_wrapper # (
 		.RXPOLARITY                     (PIPE_RXPOLARITY[0]),
 		.TXPD                           (PIPE_POWERDOWN[1:0]),
 		.RXPD                           (PIPE_POWERDOWN[1:0]),
-		.TXRATE                         (0),       // always zero...
-		.RXRATE                         (1'd0),
+		.TXRATE                         (pipe_rate_reg3 ? 3'd1 : 3'd0),       // always zerofor Gen1, 1 for switching to Gen2
+		.RXRATE                         (pipe_rate_reg3 ? 3'd1 : 3'd0),
 		.TXRATEMODE                     (1'b0),
 		.RXRATEMODE                     (1'b0),
 		//Electrical Command                
