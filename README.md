@@ -12,18 +12,22 @@ PCIe Endpoint on Xilinx 7-Series FPGAs using the PCIE_2_1 hard block and GTP tra
 100 MHz       sys_clk_n>--|             |--> sys_clk --> Goes to GTPE2_COMMON
                           +-------------+
                          
-(from GTPE2_CHANNEL) +------+
-TXOUTCLK ---|>-------| MMCM |-->125 MHz------------|>---+--DCLK (dynamic reconfig)
-100 MHz    BUFG      |      |-->250 MHz unused    BUFG  +--RXUSRCLK (clk for RX data)
-                     |      |-->user1 62.5 MHz          +--OOBCLK (out of bond)
-                     |      |-->user2 62.5 MHz          +--PCLK (main PCIe logic)
+(from GTPE2_CHANNEL) +------+                    BUFG
+TXOUTCLK ---|>-------| MMCM |-->125 MHz-----------|>---+--DCLK (dynamic reconfig)
+100 MHz    BUFG      |      |                   BUFGCTRL
+                     |      |-->125 MHz-Gen1------+\___+--RXUSRCLK (clk for RX data)                             
+                     |      |-->250 MHz-Gen2------+/   +--OOBCLK (out of bond)
+                     |      |                          +--PCLK (main PCIe logic)
+                     |      |-->user1* 
+                     |      |-->user2* 
                      +------+
+                                   *usually 62.5 MHz/125 MHz for Gen1/Gen2
 ```
 
 `src/pipe_wrapper.v` contains the GTP transceiver. It's connected to the PCIE_2_1 `src/pcie_block.v` via the [PIPE interface](https://en.wikipedia.org/wiki/PCI_Express#Physical_layer). PCIE_2_1 handles from upper physical layer, data link layer, up to transaction layer. 
 
 ```
- To User Design                                                          To PCIe Lane
+ To User Design                                                         To PCIe Lane
                      +---------------+  PIPE interface +---------------+ TX pair
 AXIS TX/RX  +------+ |  PCIE_2_1     |-------/---------| GTPE2_CHANNEL |------/-----
 =/==========| TRN2 |=|  Hard Block   |                 |               |------/-----

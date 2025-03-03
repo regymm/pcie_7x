@@ -129,11 +129,10 @@ module pcie_7x_top_aximm # (
   end
 
 pcie_7x # (	 
-  .PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ +1 ),
-  .PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ +1 ),
   .LINK_CAP_MAX_LINK_SPEED        ( ENABLE_GEN2 ? 4'h2 : 4'h1 ),
   .LINK_CTRL2_TARGET_LINK_SPEED   ( ENABLE_GEN2 ? 4'h2 : 4'h1 ),
   .LINK_STATUS_SLOT_CLOCK_CONFIG  ( "TRUE" ),
+  .USER_CLK_FREQ                  ( ENABLE_GEN2 ? 2 : 1 ), // 62.5 MHz for Gen1, 125 MHz for Gen2
 
   .CFG_DEV_ID                     (16'h9999),
   .BAR0                           (32'hFFFFF000),

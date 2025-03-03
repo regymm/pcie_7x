@@ -1035,22 +1035,23 @@ wire                               clock_locked                 ;
 
 // clock for pipe
 xilinx_pci_mmcm # (
-	.PCIE_USERCLK_FREQ              ( PCIE_USERCLK1_FREQ ),
+	.PCIE_USERCLK_FREQ              ( USER_CLK_FREQ + 1 ),
 	.PCIE_LANE                      ( 1 ),
-	.PCIE_LINK_SPEED                ( 1 )
+	.PCIE_LINK_SPEED                ( 2 )
 ) pipe_clock_i (
 	.refclk_i                       ( PIPE_TXOUTCLK_OUT), // Reference clock from lane 0
 	.rst_n_i                        ( pipe_mmcm_rst_n ), // Allow system reset for error_recovery             
 	.refclk_sel_i                   ( 0 ),
-	.pclk_sel_i                     ( 0 ),
+	.pclk_sel_i                     ( pipe_tx_rate ),
+    .pipeclk_en_i                   ( 1 ),
 	.pclk_o                         ( PIPE_PCLK_IN ),
 	.dclk_o                         ( PIPE_DCLK_IN ),
 	.userclk_o                      ( PIPE_USERCLK1_IN ),
 	.mmcm_lock_o                    ( PIPE_MMCM_LOCK_IN )
 );
 assign PIPE_USERCLK2_IN = PIPE_USERCLK1_IN;
-assign PIPE_RXUSRCLK_IN = PIPE_DCLK_IN;
-assign PIPE_OOBCLK_IN = PIPE_DCLK_IN;
+assign PIPE_RXUSRCLK_IN = PIPE_PCLK_IN;
+assign PIPE_OOBCLK_IN = PIPE_PCLK_IN;
 
 localparam USERCLK2_FREQ   =  (USER_CLK2_DIV2 == "FALSE") ? USER_CLK_FREQ :
 										(USER_CLK_FREQ == 4) ? 3 :
@@ -1087,8 +1088,8 @@ pipe_wrapper # (
 	.PCIE_TX_EIDLE_ASSERT_DELAY     ( 3'd2 ),
 	.PCIE_OOBCLK_MODE               ( 1 ),
 	.PCIE_REFCLK_FREQ               ( REF_CLK_FREQ ),
-	.PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ +1 ),
-	.PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ +1 )
+	.PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ +1 ), // unused
+	.PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ +1 ) // unused
 ) pipe_wrapper_i (
 	//---------- PIPE Clock & Reset Ports ------------------
 	.PIPE_CLK                        ( sys_clk ),
