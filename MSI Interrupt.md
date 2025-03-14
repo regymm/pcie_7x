@@ -2,13 +2,13 @@
 
 #### FPGA Code
 
-This can be rather straightforward -- the `pcie_7x_top_aximm_msi.v` and `axil_minimum_msi.v` gives an interrupt demo. In the AXI app, an increasing counter fires interrupts periodically. The counter and interrupt status can be access by a BAR register. 
+This can be rather straightforward -- the `pcie_7x_top_aximm_msi.v` and `axil_minimum_msi.v` gives an interrupt demo. In this minimal AXI app, an increasing counter fires interrupts periodically. The counter and interrupt status can be access by a BAR register. 
 
 #### Kernel Driver
 
 Unlike BAR access, a kernel driver is required to handle MSI interrupts. `pcie_7x_msi` is a demo driver that handles interrupt, and measures the latency by the counter increase between the interrupt is fired and when the counter is read by Linux kernel driver. 
 
-Build kernel driver (on Arch Linux, `linux-headers` needs to be installed):
+Build kernel driver (on Arch Linux, `linux-headers` needs to be installed): 
 
 ```
 $ make
@@ -40,6 +40,8 @@ Then, in dmesg:
 [ 1078.463292] pcie_7x_msi 0000:25:00.0: MSI handled! Read BAR0[0x0]: 0x800000e2, delay 3616 ns, ioread32 2850 ns
 [ 1079.537034] pcie_7x_msi 0000:25:00.0: MSI handled! Read BAR0[0x0]: 0x800000ea, delay 3744 ns, ioread32 2890 ns
 ```
+
+This shows MSI interrupts generated from the FPGA card are successfully handled! 
 
 Remove:
 

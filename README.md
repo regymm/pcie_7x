@@ -1,8 +1,8 @@
 ## pcie_7x
 
-PCIe Endpoint on Xilinx 7-Series FPGAs using the PCIE_2_1 hard block and GTP transceivers. 
+PCIe Endpoint on Xilinx 7-Series FPGAs using the PCIE_2_1 hard block and GTP transceivers. No proprietary Vivado IP cores! Compatible with [openXC7](https://github.com/openXC7)! 
 
-#### Structure
+#### Clock Structure
 
 `src/pipe_clock.v` generates all the clocks. 
 
@@ -23,6 +23,8 @@ TXOUTCLK ---|>-------| MMCM |-->125 MHz-----------|>---+--DCLK (dynamic reconfig
                      +------+
                                    *usually 62.5 MHz/125 MHz for Gen1/Gen2
 ```
+
+#### Module Structure
 
 `src/pipe_wrapper.v` contains the GTP transceiver. It's connected to the PCIE_2_1 `src/pcie_block.v` via the [PIPE interface](https://en.wikipedia.org/wiki/PCI_Express#Physical_layer). PCIE_2_1 handles from upper physical layer, data link layer, up to transaction layer. 
 
@@ -45,9 +47,23 @@ Reset                                              | Reset |
 
 For PCIE_2_1 parameters and port definitions, please refer to [UG477](https://docs.amd.com/v/u/en-US/ug477_7Series_IntBlock_PCIe). 
 
+#### Supported Modes
+
+PCIe Gen1 x1, PCIe Gen2 x1
+
 #### Supported Boards
 
-Alinx AC7100B SoM, Wavelet uSDR
+[Alinx AC7100B SoM](https://www.en.alinx.com/detail/498) (Artix 7 100t), [Wavelet uSDR](https://www.crowdsupply.com/wavelet-lab/usdr) (Artix 7 35t)
+
+#### Documentation
+
+Simulation: [Vivado Simulation](Vivado Simulation.md)
+
+Build and run: [Artix 7 PCIe](./Artix 7 PCIe.md)
+
+PCIe Gen2 / board without reset: [uSDR Guide](uSDR Guide.md)
+
+MSI interrupt / kernel driver: [MSI Interrupt](MSI Interrupt.md)
 
 #### Funding
 
