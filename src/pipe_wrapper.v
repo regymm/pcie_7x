@@ -950,7 +950,6 @@ module pipe_wrapper # (
         .CFOK_CFG4                      ( 1'd0),                                // GTP new, Optimized for IES
         .CFOK_CFG5                      ( 2'd0),                                // GTP new, Optimized for IES
         .CFOK_CFG6                      ( 4'd0),                                 // GTP new, Optimized for IES
-        .UCODEER_CLR                (1'd0),
         .USE_PCS_CLK_PHASE_SEL      (1'd0),
 
         .SAS_MAX_COM                (7'd64),
@@ -970,7 +969,6 @@ module pipe_wrapper # (
         .ES_CLK_PHASE_SEL           (1'd0),
         .ES_CONTROL                 (1'd0),
         .ES_ERRDET_EN               ("FALSE"),
-        .ES_EYE_SCAN_EN             ("TRUE"),
         .ES_HORZ_OFFSET             (1'd0),
         .ES_PMA_CFG                 (1'd0),
         .ES_PRESCALE                (1'd0),
