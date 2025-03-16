@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: MIT
+# Generated from https://github.com/FPGAOL-CE/caas-wizard
+#
+BUILDDIR := ${CURDIR}/build
+
+LOGFILE := ${BUILDDIR}/top.log
+
+# Build design
+all: ${BUILDDIR}/top.bit
+
+${BUILDDIR}:
+	mkdir -m 777 -p ${BUILDDIR} && chown -R nobody ${BUILDDIR} | true
+
+.ONESHELL: 
+${BUILDDIR}/vivado.tcl: ${BUILDDIR}
+	cat << EOF > $@
+	# vivado.tcl generated for FPGAOL-CE/caas-wizard
+	# can be launched from any directory
+	cd ${BUILDDIR}
+	create_project -part xc7a100tfgg484-1 -force v_proj
+	set_property target_language Verilog [current_project]
+	cd ..
+	read_verilog [glob ./src/xilinx_pcie_mmcm.v ./src/axil_to_al.v ./src/axis_pcie_to_al_us.v ./src/pcie_7x.v ./src/pcie_axi_rx.v ./src/pcie_axi_tx.v ./src/pcie_block.v ./src/pcie_brams.v ./src/pcie_tx_thrtl_ctl.v ./src/pipe_wrapper.v ./src/aximm-minimal/pcie_7x_top_aximm.v ./src/aximm-minimal/axil_minimum.v]
+	read_xdc [glob  $(wildcard ./pcie_7x_ac7100b.xdc) ]
+	cd build
+	synth_design -top pcie_7x_top_aximm
+	opt_design
+	place_design
+	phys_opt_design
+	route_design
+	write_bitstream -verbose -force top.bit
+	# report_utilization -file util.rpt
+	# report_timing_summary -file timing.rpt
+	EOF
+
+${BUILDDIR}/top.bit: ${BUILDDIR}/vivado.tcl
+	cd ${BUILDDIR} && vivado -mode batch -source $< > ${LOGFILE} 2>&1
+
+.PHONY: clean
+clean:
+	rm -rf ${BUILDDIR}
