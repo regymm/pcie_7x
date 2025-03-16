@@ -63,11 +63,11 @@ docker run -it --rm -v .:/mnt regymm/openxc7 make -C /mnt -f Makefile.alinx_100t
 
 #### Documentation
 
-Build and run: [Artix 7 PCIe](./Artix 7 PCIe.md)
+Build and run: [Artix 7 PCIe](./Artix_7_PCIe.md)
 
-PCIe Gen2 / board without reset: [uSDR Guide](uSDR Guide.md)
+PCIe Gen2 / board without reset: [uSDR Guide](uSDR_Guide.md)
 
-MSI interrupt / kernel driver: [MSI Interrupt](MSI Interrupt.md)
+MSI interrupt / kernel driver: [MSI Interrupt](MSI_Interrupt.md)
 
 #### Funding
 
