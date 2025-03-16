@@ -55,9 +55,13 @@ PCIe Gen1 x1, PCIe Gen2 x1
 
 [Alinx AC7100B SoM](https://www.en.alinx.com/detail/498) (Artix 7 100t), [Wavelet uSDR](https://www.crowdsupply.com/wavelet-lab/usdr) (Artix 7 35t)
 
-#### Documentation
+#### Bitstream with openXC7 quickstart!
 
-Simulation: [Vivado Simulation](Vivado Simulation.md)
+```
+docker run -it --rm -v .:/mnt regymm/openxc7 make -C /mnt -f Makefile.alinx_100t.openxc7
+```
+
+#### Documentation
 
 Build and run: [Artix 7 PCIe](./Artix 7 PCIe.md)
 

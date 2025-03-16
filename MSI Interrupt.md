@@ -77,3 +77,7 @@ Usually, ~10 us latency is OK, and >100 us is very bad.
 reduces the latency from a initial ~460 us down to ~5 us, then ~3 us. Now, the main limiting factor is MMIO read delay. Enabling BAR memory prefetching is said to reduce latency. 
 
 Kernel `6.13.5-arch1-1 #1 SMP PREEMPT_DYNAMIC Thu, 27 Feb 2025 18:09:44 +0000 x86_64 GNU/Linux` is used. It slightly outperforms the `linux-rt` kernel `6.10.2-rt14-arch1-5-rt #1 SMP PREEMPT_RT Sat, 08 Feb 2025 13:50:34 +0000 x86_64 GNU/Linux`. 
+
+When CPUs are not idle, like under stress test, the effect may similar as disabling idle states, and latency may also be reduce! 
+
+```stress --cpu 8```
