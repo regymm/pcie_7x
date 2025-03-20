@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: CERN-OHL-P
 // Copyright 2024 regymm
-// PCIe to AXI4 Lite Memory-Mapped, can place on Block Design
+// PCIe to AXI4 Lite Memory-Mapped with MSI interrupt, can place on Block Design
 `timescale 1ns / 1ps
 `default_nettype wire
 
 // external clock, not external GT
-module pcie_7x_aximm (
+module pcie_7x_aximm_msi_bd (
   (* X_INTERFACE_INFO = "xilinx.com:interface:pcie_7x_mgt:1.0 pcie_7x_mgt txp" *)
   output      [0:0]pci_exp_txp,
   (* X_INTERFACE_INFO = "xilinx.com:interface:pcie_7x_mgt:1.0 pcie_7x_mgt txn" *)
@@ -25,13 +25,13 @@ module pcie_7x_aximm (
   // interrupts, msi_vector_width unused on TimeCard
   input  intx_msi_request,
   input  [4:0]msi_vector_num,
-  output interrupt_out,
   output intx_msi_grant,
   output msi_enable,
   output [2:0]msi_vector_width,
 
   // AXI Lite master interface
 
+  (* X_INTERFACE_PARAMETER = "FREQ_HZ 62500000" *)
   output m_axi_clk,
   output m_axi_aresetn,
 
@@ -120,18 +120,29 @@ pcie_7x #
   .PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ +1 ),
   .PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ +1 ),
 
+  // Time Card
+  .CFG_VEND_ID                    (16'h1D9B),
+  .CFG_DEV_ID                     (16'h0400),
+  .CFG_SUBSYS_VEND_ID             (16'h10EE),
+  .CFG_SUBSYS_ID                  (16'h0007),
+  .CLASS_CODE                     (24'h058000),
+  // 32 MB Bar
+  .BAR0                           (32'hFE000000),
+  // enable up to 32 interrupts
+  .MSI_CAP_MULTIMSGCAP            (5)
+
   // can reduce RAM usage (and performance) by tuning parameters
   // results can be derived from 7 Series Integrated Block for PCI Express -
   // Core Capabilities - BRAM Configuration Options, depending on Max Payload Size
-  .DEV_CAP_MAX_PAYLOAD_SUPPORTED  (1),
-  .VC0_RX_RAM_LIMIT               (13'h3FF),
-  .VC0_TOTAL_CREDITS_CD           (370),
-  .VC0_TOTAL_CREDITS_CH           (72),
-  .VC0_TOTAL_CREDITS_NPH          (4),
-  .VC0_TOTAL_CREDITS_NPD          (8),
-  .VC0_TOTAL_CREDITS_PD           (32),
-  .VC0_TOTAL_CREDITS_PH           (4),
-  .VC0_TX_LASTPACKET              (28)
+  //.DEV_CAP_MAX_PAYLOAD_SUPPORTED  (1),
+  //.VC0_RX_RAM_LIMIT               (13'h3FF),
+  //.VC0_TOTAL_CREDITS_CD           (370),
+  //.VC0_TOTAL_CREDITS_CH           (72),
+  //.VC0_TOTAL_CREDITS_NPH          (4),
+  //.VC0_TOTAL_CREDITS_NPD          (8),
+  //.VC0_TOTAL_CREDITS_PD           (32),
+  //.VC0_TOTAL_CREDITS_PH           (4),
+  //.VC0_TX_LASTPACKET              (28)
    ) 
 pcie_7x_i
   (
@@ -172,17 +183,18 @@ pcie_7x_i
   .cfg_turnoff_ok                            ( cfg_turnoff_ok ),
   .cfg_pm_wake                               ( cfg_pm_wake ),
 
+  // refer to PG054 Interrupt Interface Signals
   .cfg_interrupt                             ( intx_msi_request ),
   .cfg_interrupt_rdy                         ( intx_msi_grant),
-  .cfg_interrupt_assert                      ( cfg_interrupt_assert ), // 0
-  .cfg_interrupt_di                          ( cfg_interrupt_di ), // 0
+  .cfg_interrupt_assert                      ( 1'b0 ), // for legacy interrupt, tie to 0
+  .cfg_interrupt_di                          ( {3'b0, msi_vector_num} ), // MSI vector number, only up to 5 bits are supported by PCIe standard, but somehow Xilinx's endpoint can go up to 8-bit (256 vectors)
   .cfg_interrupt_do                          ( ),
-  .cfg_interrupt_mmenable                    ( msi_vector_width ),
-  .cfg_interrupt_msienable                   ( msi_enable ),
+  .cfg_interrupt_mmenable                    ( msi_vector_width ), // 0 to 5 bits. However, Linux kernel may only support single-vector MSI
+  .cfg_interrupt_msienable                   ( msi_enable ), // only MSI interrupt (not legacy or PCIe Gen3 MSI-X)
   .cfg_interrupt_msixenable                  ( ),
   .cfg_interrupt_msixfm                      ( ),
-  .cfg_interrupt_stat                        ( cfg_interrupt_stat ), // 0
-  .cfg_pciecap_interrupt_msgnum              ( msi_vector_num ),
+  .cfg_interrupt_stat                        ( 1'b0 ),
+  .cfg_pciecap_interrupt_msgnum              ( 5'b0 ),
 
   .cfg_status                                ( ),
   .cfg_command                               ( ),
@@ -275,10 +287,10 @@ assign cfg_pm_force_state  = 2'b00;              // Do not move force core into 
 assign cfg_dsn = 64'h0000000101000a35;           // Assign the input DSN (Device Serial Number)
 assign cfg_turnoff_ok = cfg_to_turnoff;
 
-assign cfg_interrupt = 1'b0;
-assign cfg_interrupt_assert = 1'b0;
-assign cfg_interrupt_stat = 1'b0;
-assign cfg_interrupt_di= 0;
+//assign cfg_interrupt = 1'b0;
+//assign cfg_interrupt_assert = 1'b0;
+//assign cfg_interrupt_stat = 1'b0;
+//assign cfg_interrupt_di= 0;
 
 assign m_axi_clk = user_clk;
 assign m_axi_aresetn = !user_reset_q;
