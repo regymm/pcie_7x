@@ -105,6 +105,7 @@ pcie_7x # (
 
   .CFG_DEV_ID                     (16'h9999),
   .BAR0                           (32'hFFFFF000),
+  .MSI_CAP_MULTIMSGCAP            (5),
 
    //can reduce RAM usage (and performance) by tuning parameters
    //results can be derived from 7 Series Integrated Block for PCI Express -
@@ -166,7 +167,7 @@ pcie_7x # (
   .cfg_interrupt_msixenable                  ( ),
   .cfg_interrupt_msixfm                      ( ),
   .cfg_interrupt_stat                        ( 1'b0 ), // 0
-  .cfg_pciecap_interrupt_msgnum              ( 5'd31 ),
+  .cfg_pciecap_interrupt_msgnum              ( 5'd0 ),
 
   .cfg_status                                ( ),
   .cfg_command                               ( ),
