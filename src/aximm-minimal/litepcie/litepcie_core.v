@@ -9662,7 +9662,7 @@ MMCME2_ADV #(
 //------------------------------------------------------------------------------
 // Instance pcie_s7 of pcie_s7 Module.
 //------------------------------------------------------------------------------
-pcie_s7_s7 pcie_s7(
+pcie_s7 pcie_s7(
 	// Inputs.
 	.cfg_aer_interrupt_msgnum                   (1'd0),
 	.cfg_ds_bus_number                          (1'd0),

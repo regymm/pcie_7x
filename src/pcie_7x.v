@@ -5,6 +5,7 @@
 `timescale 1ns / 1ps
 
 module pcie_7x # (
+    parameter         EXTERNAL_MMCM      = "FALSE",
 	// REAL parameters!
 	parameter         CFG_VEND_ID        = 16'h10EE,
 	parameter         CFG_DEV_ID         = 16'h7011,
@@ -421,7 +422,18 @@ module pcie_7x # (
 	input                                       sys_clk,
 	input                                       sys_rst_n,
 	output   [4:0]                              gt_reset_fsm,
-	output   [5:0]                              pl_ltssm_state
+	output   [5:0]                              pl_ltssm_state,
+
+    input                                       pipe_pclk_in,
+    input                                       pipe_dclk_in,
+    input                                       pipe_oobclk_in,
+    input                                       pipe_userclk1_in,
+    input                                       pipe_userclk2_in,
+    input                                       pipe_mmcm_lock_in,
+    input                                       pipe_rxusrclk_in,
+    input                                       pipe_rxoutclk_in, // unused
+    output                                      pipe_pclk_sel_out,
+    output                                      pipe_txoutclk_out
 );
 
 wire trn_lnk_up;
@@ -1033,6 +1045,12 @@ wire [  7:0]                       gt_rx_valid_wire             ;
 wire [0:0]                         phystatus_rst                ;
 wire                               clock_locked                 ;
 
+wire PIPE_TXOUTCLK_OUT;
+wire PIPE_DCLK_IN;
+wire PIPE_MMCM_LOCK_IN;
+wire PIPE_RXUSRCLK_IN;
+wire PIPE_OOBCLK_IN;
+generate if (EXTERNAL_MMCM == "FALSE") begin: in_module_mmcm
 // clock for pipe
 xilinx_pci_mmcm # (
 	.PCIE_USERCLK_FREQ              ( USER_CLK_FREQ + 1 ),
@@ -1052,6 +1070,18 @@ xilinx_pci_mmcm # (
 assign PIPE_USERCLK2_IN = PIPE_USERCLK1_IN;
 assign PIPE_RXUSRCLK_IN = PIPE_PCLK_IN;
 assign PIPE_OOBCLK_IN = PIPE_PCLK_IN;
+end else begin: external_mmcm
+assign PIPE_PCLK_IN = pipe_pclk_in;
+assign PIPE_DCLK_IN = pipe_dclk_in;
+assign PIPE_OOBCLK_IN = pipe_oobclk_in;
+assign PIPE_USERCLK1_IN = pipe_userclk1_in;
+assign PIPE_USERCLK2_IN = pipe_userclk2_in;
+assign PIPE_RXUSRCLK_IN = pipe_rxusrclk_in;
+assign PIPE_MMCM_LOCK_IN = pipe_mmcm_lock_in;
+assign pipe_pclk_sel_out = pipe_tx_rate;
+assign pipe_txoutclk_out = PIPE_TXOUTCLK_OUT;
+end
+endgenerate
 
 localparam USERCLK2_FREQ   =  (USER_CLK2_DIV2 == "FALSE") ? USER_CLK_FREQ :
 										(USER_CLK_FREQ == 4) ? 3 :
