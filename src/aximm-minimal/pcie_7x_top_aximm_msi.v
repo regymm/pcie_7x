@@ -6,7 +6,8 @@ module pcie_7x_top_aximm_msi # (
   parameter C_DATA_WIDTH        = 64, // RX/TX interface data width
   parameter KEEP_WIDTH          = C_DATA_WIDTH / 8, // TSTRB width
   parameter NO_RESET            = 0,
-  parameter ENABLE_GEN2         = 0
+  parameter ENABLE_GEN2         = 0,
+  parameter MULTI_VECTOR_MSI    = 0 // 0 for single vector, 1 for 32 vectors
 ) (
   output      pci_exp_txp,
   output      pci_exp_txn,
@@ -331,7 +332,9 @@ wire [2:0]msi_vector_width;
 wire [4:0]msi_vector_num;
 
 // Instantiate axil_minimum
-axil_minimum_msi axil_minimum_msi_inst (
+axil_minimum_msi #(
+    .MULTI_VECTOR_MSI(MULTI_VECTOR_MSI)
+) axil_minimum_msi_inst (
 	.clk(user_clk),
 	.rst_n(!user_reset_q),
 	// AXI Lite Interface

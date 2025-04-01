@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: CERN-OHL-P
 // Copyright 2024 regymm
-module axil_minimum_msi (
+module axil_minimum_msi #(
+    parameter MULTI_VECTOR_MSI = 0
+) (
 	input clk,
 	input rst_n,
 
@@ -45,7 +47,8 @@ module axil_minimum_msi (
 
     // BAR memory accessible, unused
     reg [31:0]tmp_in = 0;
-    assign msi_vector_num = tmp_in[4:0];
+    // for multi-vector MSI or basic MSI test (default value of tmp_in is just 0)
+    assign msi_vector_num = MULTI_VECTOR_MSI ? counter[30:26] : tmp_in[4:0];
 
     reg [31:0]tmp_out = 0;
     always @ (posedge clk) begin
