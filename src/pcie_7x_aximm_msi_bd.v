@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: CERN-OHL-P
 // Copyright 2024 regymm
 // PCIe to AXI4 Lite Memory-Mapped with MSI interrupt, can place on Block Design
+// This uses little endian!
 `timescale 1ns / 1ps
 `default_nettype wire
 

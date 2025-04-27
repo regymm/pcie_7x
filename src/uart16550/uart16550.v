@@ -6,6 +6,7 @@ module uart16550 #(
     parameter CLOCK_FREQ = 62500000,
     parameter RESET_BAUD_RATE = 9600,
     parameter FIFODEPTH = 16,
+    parameter LENDIAN = 0,
     parameter SIM = 0
 )(
     input clk,
@@ -28,7 +29,7 @@ module uart16550 #(
     output rxnew,
     output [7:0]rxdata
 );
-	(*mark_debug = "true"*) wire [7:0]data = d[31:24];
+	(*mark_debug = "true"*) wire [7:0]data = LENDIAN ? d[7:0] : d[31:24];
 
 	(*mark_debug = "true"*) reg rx_r = 1;
 	(*mark_debug = "true"*) reg tx_r = 1;
@@ -159,14 +160,14 @@ module uart16550 #(
     
     // ordinary registe writes
     always @ (*) begin
-        if      (a == 3'b000) spo = {dlab ? dll : rbr, 24'b0};
-        else if (a == 3'b001) spo = {dlab ? dlm : ier, 24'b0};
-        else if (a == 3'b010) spo = {iir, 24'b0};
-        else if (a == 3'b011) spo = {lcr, 24'b0};
-        else if (a == 3'b100) spo = {mcr, 24'b0};
-        else if (a == 3'b101) spo = {lsr, 24'b0};
-        else if (a == 3'b110) spo = {msr, 24'b0};
-        else if (a == 3'b111) spo = {spr, 24'b0};
+        if      (a == 3'b000) spo = LENDIAN ? {24'b0, dlab ? dll : rbr} : {dlab ? dll : rbr, 24'b0};
+        else if (a == 3'b001) spo = LENDIAN ? {24'b0, dlab ? dlm : ier} : {dlab ? dlm : ier, 24'b0};
+        else if (a == 3'b010) spo = LENDIAN ? {24'b0, iir} : {iir, 24'b0};
+        else if (a == 3'b011) spo = LENDIAN ? {24'b0, lcr} : {lcr, 24'b0};
+        else if (a == 3'b100) spo = LENDIAN ? {24'b0, mcr} : {mcr, 24'b0};
+        else if (a == 3'b101) spo = LENDIAN ? {24'b0, lsr} : {lsr, 24'b0};
+        else if (a == 3'b110) spo = LENDIAN ? {24'b0, msr} : {msr, 24'b0};
+        else if (a == 3'b111) spo = LENDIAN ? {24'b0, spr} : {spr, 24'b0};
         else spo = 32'b0;
     end
     always @ (posedge clk) begin
