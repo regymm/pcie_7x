@@ -3,3 +3,4 @@ chipdb
 build*
 xvlog*
 .Xil
+run_caas.sh

@@ -176,7 +176,7 @@ LEDs on board can be used to show status (there's Vivado ILA, which is not avail
 - [ ] Check if design works with **code boot without JTAG connected** / host PC **reboot**. 
 - [ ] Check if design works in PCIe **Gen1** mode. 
 - [ ] Check if **reset** is asserted then de-asserted on real hardware. 
-- [ ] Check if **clock** output is valid on real hardware. 
+- [ ] Check if **clock** outputs are valid on real hardware. 
 - [ ] Check if **GT** initialization `[4:0]gt_reset_fsm` proceeds correctly. 
 - [ ] Check if **training** `[5:0]pl_ltssm_state` proceeds correctly according to UG477. 
 - [ ] Check if **link up** `user_link_up` is asserted. Check if `user_link_up` is up **momentarily**, if host PC keeps resetting. 
