@@ -1083,6 +1083,8 @@ assign pipe_txoutclk_out = PIPE_TXOUTCLK_OUT;
 end
 endgenerate
 
+assign pipe_mmcm_lock = PIPE_MMCM_LOCK_IN;
+
 localparam USERCLK2_FREQ   =  (USER_CLK2_DIV2 == "FALSE") ? USER_CLK_FREQ :
 										(USER_CLK_FREQ == 4) ? 3 :
 										(USER_CLK_FREQ == 3) ? 2 :
