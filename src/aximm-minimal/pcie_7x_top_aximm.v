@@ -128,7 +128,10 @@ module pcie_7x_top_aximm # (
     user_lnk_up_q <= user_lnk_up;
   end
 
+//*
 pcie_7x # (	 
+  .PCIE_GT_DEVICE                 ( "GTX" ),
+  .PCIE_USE_MODE                  ( "3.0" ),
   .LINK_CAP_MAX_LINK_SPEED        ( ENABLE_GEN2 ? 4'h2 : 4'h1 ),
   .LINK_CTRL2_TARGET_LINK_SPEED   ( ENABLE_GEN2 ? 4'h2 : 4'h1 ),
   .LINK_STATUS_SLOT_CLOCK_CONFIG  ( "TRUE" ),
@@ -223,6 +226,125 @@ pcie_7x # (
   .gt_reset_fsm                              ( gt_reset_fsm ),
   .pl_ltssm_state                            ( pl_ltssm_state )
 );
+//*/
+// -- GTX original IP working
+/*
+pcie_7x_0 # (	 
+//  .LINK_CAP_MAX_LINK_SPEED        ( ENABLE_GEN2 ? 4'h2 : 4'h1 ),
+//  .LINK_CTRL2_TARGET_LINK_SPEED   ( ENABLE_GEN2 ? 4'h2 : 4'h1 ),
+//  .LINK_STATUS_SLOT_CLOCK_CONFIG  ( "TRUE" ),
+//  .USER_CLK_FREQ                  ( ENABLE_GEN2 ? 2 : 1 ), // 62.5 MHz for Gen1, 125 MHz for Gen2
+
+//  .CFG_DEV_ID                     (16'h9999),
+//  .BAR0                           (32'hFFFFF000),
+
+//   //can reduce RAM usage (and performance) by tuning parameters
+//   //results can be derived from 7 Series Integrated Block for PCI Express -
+//   //Core Capabilities - BRAM Configuration Options, depending on Max Payload Size
+//  .DEV_CAP_MAX_PAYLOAD_SUPPORTED  (1),
+//  .VC0_RX_RAM_LIMIT               (13'h3FF),
+//  .VC0_TOTAL_CREDITS_CD           (370),
+//  .VC0_TOTAL_CREDITS_CH           (72),
+//  .VC0_TOTAL_CREDITS_NPH          (4),
+//  .VC0_TOTAL_CREDITS_NPD          (8),
+//  .VC0_TOTAL_CREDITS_PD           (32),
+//  .VC0_TOTAL_CREDITS_PH           (4),
+//  .VC0_TX_LASTPACKET              (28)
+) pcie_7x_gtx_stock_i (
+  .pci_exp_txn                               ( pci_exp_txn ),
+  .pci_exp_txp                               ( pci_exp_txp ),
+  .pci_exp_rxn                               ( pci_exp_rxn ),
+  .pci_exp_rxp                               ( pci_exp_rxp ),
+  //.pipe_mmcm_rst_n                            ( 1 ),
+  // Common
+  .user_clk_out                              ( user_clk ),
+  .user_reset_out                            ( user_reset ),
+  .user_lnk_up                               ( user_lnk_up ),
+  // TX
+  .s_axis_tx_tready                          ( s_axis_tx_tready ),
+  .s_axis_tx_tdata                           ( s_axis_tx_tdata ),
+  .s_axis_tx_tkeep                           ( s_axis_tx_tkeep ),
+  .s_axis_tx_tuser                           ( s_axis_tx_tuser ),
+  .s_axis_tx_tlast                           ( s_axis_tx_tlast ),
+  .s_axis_tx_tvalid                          ( s_axis_tx_tvalid ),
+  // Rx
+  .m_axis_rx_tdata                           ( m_axis_rx_tdata ),
+  .m_axis_rx_tkeep                           ( m_axis_rx_tkeep ),
+  .m_axis_rx_tlast                           ( m_axis_rx_tlast ),
+  .m_axis_rx_tvalid                          ( m_axis_rx_tvalid ),
+  .m_axis_rx_tready                          ( m_axis_rx_tready ),
+  .m_axis_rx_tuser                           ( m_axis_rx_tuser ),
+
+  .tx_cfg_gnt                                ( tx_cfg_gnt ),
+  .rx_np_ok                                  ( rx_np_ok ),
+  .rx_np_req                                 ( rx_np_req ),
+  .cfg_trn_pending                           ( cfg_trn_pending ),
+  .cfg_pm_halt_aspm_l0s                      ( cfg_pm_halt_aspm_l0s ),
+  .cfg_pm_halt_aspm_l1                       ( cfg_pm_halt_aspm_l1 ),
+  .cfg_pm_force_state_en                     ( cfg_pm_force_state_en ),
+  .cfg_pm_force_state                        ( cfg_pm_force_state ),
+  .cfg_dsn                                   ( cfg_dsn ),
+  .cfg_turnoff_ok                            ( cfg_turnoff_ok ),
+  .cfg_pm_wake                               ( cfg_pm_wake ),
+  
+  // to make gtx default core sim work
+    .cfg_pm_send_pme_to                        ( 1'b0 ),
+  .cfg_ds_bus_number                         ( 8'b0 ),
+  .cfg_ds_device_number                      ( 5'b0 ),
+  .cfg_ds_function_number                    ( 3'b0 ),
+  .fc_sel (3'b0),
+  .pcie_drp_clk                               ( 1'b1 ),
+  .pcie_drp_en                                ( 1'b0 ),
+  .pcie_drp_we                                ( 1'b0 ),
+  .pcie_drp_addr                              ( 9'h0 ),
+  .pcie_drp_di                                ( 16'h0 ),
+  .pl_transmit_hot_rst                       ( 1'b0 ),
+  .pl_downstream_deemph_source               ( 1'b0 ),
+    .pl_directed_link_change                   ( 0 ),
+  .pl_directed_link_width                    ( 0 ),
+  .pl_directed_link_speed                    ( 0 ),
+  .pl_directed_link_auton                    ( 0 ),
+  .pl_upstream_prefer_deemph                 ( 1 ),
+  
+
+  .cfg_interrupt                             ( cfg_interrupt ),
+  .cfg_interrupt_rdy                         ( ),
+  .cfg_interrupt_assert                      ( cfg_interrupt_assert ),
+  .cfg_interrupt_di                          ( cfg_interrupt_di ),
+  .cfg_interrupt_do                          ( ),
+  .cfg_interrupt_mmenable                    ( ),
+  .cfg_interrupt_msienable                   ( ),
+  .cfg_interrupt_msixenable                  ( ),
+  .cfg_interrupt_msixfm                      ( ),
+  .cfg_interrupt_stat                        ( cfg_interrupt_stat ),
+  .cfg_pciecap_interrupt_msgnum              ( cfg_pciecap_interrupt_msgnum ),
+
+  .cfg_status                                ( ),
+  .cfg_command                               ( ),
+  .cfg_dstatus                               ( ),
+  .cfg_lstatus                               ( ),
+  .cfg_pcie_link_state                       ( ),
+  .cfg_dcommand                              ( ),
+  .cfg_lcommand                              ( ),
+  .cfg_dcommand2                             ( ),
+
+  .cfg_pmcsr_pme_en                          ( ),
+  .cfg_pmcsr_powerstate                      ( ),
+  .cfg_pmcsr_pme_status                      ( ),
+  .cfg_received_func_lvl_rst                 ( ),
+  .tx_buf_av                                 ( ),
+  .tx_err_drop                               ( ),
+  .tx_cfg_req                                ( ),
+  .cfg_to_turnoff                            ( cfg_to_turnoff ),
+  .cfg_bus_number                            ( cfg_bus_number ),
+  .cfg_device_number                         ( cfg_device_number ),
+  .cfg_function_number                       ( cfg_function_number ),
+  .sys_clk                                   ( sys_clk ),
+  .sys_rst_n                                 ( sys_rst_n_c ),
+//  .gt_reset_fsm                              ( gt_reset_fsm ),
+  .pl_ltssm_state                            ( pl_ltssm_state )
+);
+//*/
 
 `ifndef STOCK_APP
 wire[31:2]      m_al_waddr;
