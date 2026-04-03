@@ -1086,11 +1086,16 @@ endgenerate
 assign pipe_mmcm_lock = PIPE_MMCM_LOCK_IN;
 
 localparam USERCLK2_FREQ   =  (USER_CLK2_DIV2 == "FALSE") ? USER_CLK_FREQ :
-										(USER_CLK_FREQ == 4) ? 3 :
-										(USER_CLK_FREQ == 3) ? 2 :
-										 USER_CLK_FREQ;
+									(USER_CLK_FREQ == 4) ? 3 :
+									(USER_CLK_FREQ == 3) ? 2 :
+									 USER_CLK_FREQ;
+
 // GT to PIPE
-pipe_wrapper # (
+// PCIE_GT_DEVICE == "GTX" -> pipe_wrapper_gtx (Kintex-7, GTXE2_CHANNEL, CPLL)
+// PCIE_GT_DEVICE == "GTP" -> pipe_wrapper     (Artix-7,  GTPE2_CHANNEL + GTPE2_COMMON)
+// Both modules have identical port and parameter interfaces.
+generate if (PCIE_GT_DEVICE == "GTX") begin : gt_wrapper_gtx
+pipe_wrapper_gtx # (
 	.PCIE_SIM_MODE                  ( "TRUE" ),
 	// synthesis translate_off
 	.PCIE_SIM_SPEEDUP               ( "TRUE" ),
@@ -1120,10 +1125,9 @@ pipe_wrapper # (
 	.PCIE_TX_EIDLE_ASSERT_DELAY     ( 3'd2 ),
 	.PCIE_OOBCLK_MODE               ( 1 ),
 	.PCIE_REFCLK_FREQ               ( REF_CLK_FREQ ),
-	.PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ +1 ), // unused
-	.PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ +1 ) // unused
+	.PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ +1 ),
+	.PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ +1 )
 ) pipe_wrapper_i (
-	//---------- PIPE Clock & Reset Ports ------------------
 	.PIPE_CLK                        ( sys_clk ),
 	.PIPE_RESET_N                    ( sys_rst_n ),
 	//.PIPE_PCLK                       ( pipe_clk ),
@@ -1170,5 +1174,86 @@ pipe_wrapper # (
 	.PIPE_TXOUTCLK_OUT              ( PIPE_TXOUTCLK_OUT ),
 	.gt_reset_fsm                   (gt_reset_fsm)
 );
+end else begin : gt_wrapper_gtp
+pipe_wrapper # (
+	.PCIE_SIM_MODE                  ( "TRUE" ),
+	// synthesis translate_off
+	.PCIE_SIM_SPEEDUP               ( "TRUE" ),
+	// synthesis translate_on
+	.PCIE_EXT_CLK                   ( PCIE_EXT_CLK ),
+	.PCIE_TXBUF_EN                  ( PCIE_TXBUF_EN ),
+	.PCIE_EXT_GT_COMMON             ( PCIE_EXT_GT_COMMON ),
+	.EXT_CH_GT_DRP                  ( EXT_CH_GT_DRP ),
+	.TX_MARGIN_FULL_0               (TX_MARGIN_FULL_0),
+	.TX_MARGIN_FULL_1               (TX_MARGIN_FULL_1),
+	.TX_MARGIN_FULL_2               (TX_MARGIN_FULL_2),
+	.TX_MARGIN_FULL_3               (TX_MARGIN_FULL_3),
+	.TX_MARGIN_FULL_4               (TX_MARGIN_FULL_4),
+	.TX_MARGIN_LOW_0                (TX_MARGIN_LOW_0),
+	.TX_MARGIN_LOW_1                (TX_MARGIN_LOW_1),
+	.TX_MARGIN_LOW_2                (TX_MARGIN_LOW_2),
+	.TX_MARGIN_LOW_3                (TX_MARGIN_LOW_3),
+	.TX_MARGIN_LOW_4                (TX_MARGIN_LOW_4),
+	.PCIE_ASYNC_EN                  ( PCIE_ASYNC_EN ),
+	.PCIE_CHAN_BOND                 ( PCIE_CHAN_BOND ),
+	.PCIE_PLL_SEL                   ( PCIE_PLL_SEL ),
+	.PCIE_GT_DEVICE                 ( PCIE_GT_DEVICE ),
+	.PCIE_USE_MODE                  ( PCIE_USE_MODE ),
+	.PCIE_LANE                      ( LINK_CAP_MAX_LINK_WIDTH ),
+	.PCIE_LPM_DFE                   ( "LPM" ),
+	.PCIE_LINK_SPEED                ( 3 ),
+	.PCIE_TX_EIDLE_ASSERT_DELAY     ( 3'd2 ),
+	.PCIE_OOBCLK_MODE               ( 1 ),
+	.PCIE_REFCLK_FREQ               ( REF_CLK_FREQ ),
+	.PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ +1 ),
+	.PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ +1 )
+) pipe_wrapper_i (
+	.PIPE_CLK                        ( sys_clk ),
+	.PIPE_RESET_N                    ( sys_rst_n ),
+	//.PIPE_PCLK                       ( pipe_clk ),
+	//---------- PIPE TX Data Ports ------------------
+	.PIPE_TXDATA                    ( pipe_tx0_data ),
+	.PIPE_TXDATAK                   ( pipe_tx0_char_is_k ),
+
+	.PIPE_TXP                       ( pci_exp_txp[0:0] ),
+	.PIPE_TXN                       ( pci_exp_txn[0:0] ),
+	//---------- PIPE RX Data Ports ------------------
+	.PIPE_RXP                       ( pci_exp_rxp[0:0] ),
+	.PIPE_RXN                       ( pci_exp_rxn[0:0] ),
+
+	.PIPE_RXDATA                    ( gt_rx_data_wire[31:0] ),
+	.PIPE_RXDATAK                   ( gt_rx_data_k_wire[3:0] ),
+	//---------- PIPE Command Ports ------------------
+	.PIPE_TXDETECTRX                ( pipe_tx_rcvr_det ),
+	.PIPE_TXELECIDLE                ( pipe_tx0_elec_idle ),
+	.PIPE_TXCOMPLIANCE              ( pipe_tx0_compliance ),
+	.PIPE_RXPOLARITY                ( pipe_rx0_polarity ),
+	.PIPE_POWERDOWN                 ( pipe_tx0_powerdown ),
+	.PIPE_RATE                      ( {1'b0,pipe_tx_rate} ),
+	//---------- PIPE Electrical Command Ports ------------------
+	.PIPE_TXMARGIN                  ( pipe_tx_margin[2:0] ),
+	.PIPE_TXSWING                   ( 0 ),
+	.PIPE_TXDEEMPH                  ( {(LINK_CAP_MAX_LINK_WIDTH){pipe_tx_deemph}}),
+	//---------- PIPE Status Ports -------------------
+	.PIPE_RXVALID                   ( gt_rx_valid_wire[0:0] ),
+	.PIPE_PHYSTATUS                 ( gt_rx_phy_status_wire[0:0] ),
+	.PIPE_PHYSTATUS_RST             ( phystatus_rst ),
+	.PIPE_RXELECIDLE                ( gt_rx_elec_idle_wire[0:0] ),
+	.PIPE_EYESCANDATAERROR          ( ),
+	.PIPE_RXSTATUS                  ( gt_rx_status_wire[2:0] ),
+	//---------- PIPE User Ports ---------------------------
+	.PIPE_MMCM_RST_N                ( pipe_mmcm_rst_n ),
+	.PIPE_PCLK_LOCK                 ( clock_locked ),
+	.PIPE_RXCHANISALIGNED           ( gt_rxchanisaligned_wire[LINK_CAP_MAX_LINK_WIDTH-1:0] ),
+	//---------- External Clock Ports ---------------------------
+	.PIPE_PCLK_IN                   ( PIPE_PCLK_IN ),
+	.PIPE_RXUSRCLK_IN               ( PIPE_RXUSRCLK_IN ),
+	.PIPE_DCLK_IN                   ( PIPE_DCLK_IN ),
+	.PIPE_OOBCLK_IN                 ( PIPE_OOBCLK_IN ),
+	.PIPE_MMCM_LOCK_IN              ( PIPE_MMCM_LOCK_IN ),
+	.PIPE_TXOUTCLK_OUT              ( PIPE_TXOUTCLK_OUT ),
+	.gt_reset_fsm                   (gt_reset_fsm)
+);
+end endgenerate
 endmodule
 
