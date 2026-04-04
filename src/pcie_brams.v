@@ -19,7 +19,7 @@ module pcie_four_brams #(
 	reg [71:0]rdata0;
 	reg [71:0]rdata1;
     // TODO: before nextpnr-xilinx BRAM support is investigated, use dist. ram instead. 
-	(* ram_style = "distributed" *) reg [71:0]ram[2**DEPTH-1:0]; // VC0_RX_RAM_LIMIT 7FF -> 11 bits
+	/*(* ram_style = "distributed" *)*/ reg [71:0]ram[2**DEPTH-1:0]; // VC0_RX_RAM_LIMIT 7FF -> 11 bits
 	always @ (posedge user_clk_i) begin
 		if (wen)
 			ram[waddr] <= wdata;
