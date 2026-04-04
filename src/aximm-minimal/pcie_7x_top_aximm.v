@@ -7,7 +7,8 @@ module pcie_7x_top_aximm # (
   parameter C_DATA_WIDTH        = 64, // RX/TX interface data width
   parameter KEEP_WIDTH          = C_DATA_WIDTH / 8, // TSTRB width
   parameter NO_RESET            = 0,
-  parameter ENABLE_GEN2         = 0
+  parameter ENABLE_GEN2         = 0,
+  parameter GT_DEVICE           = "GTP"
 ) (
   output      pci_exp_txp,
   output      pci_exp_txn,
@@ -130,7 +131,7 @@ module pcie_7x_top_aximm # (
 
 //*
 pcie_7x # (	 
-  .PCIE_GT_DEVICE                 ( "GTX" ),
+  .PCIE_GT_DEVICE                 ( GT_DEVICE ),
   .PCIE_USE_MODE                  ( "3.0" ),
   .LINK_CAP_MAX_LINK_SPEED        ( ENABLE_GEN2 ? 4'h2 : 4'h1 ),
   .LINK_CTRL2_TARGET_LINK_SPEED   ( ENABLE_GEN2 ? 4'h2 : 4'h1 ),
