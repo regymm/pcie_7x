@@ -475,7 +475,7 @@ module pipe_wrapper_gtx # (
                 rst_cpllreset  <= 1'd1;
                 rst_gtreset   <= 1'd1;
                 if (
-                    (~plllock_reg2) && // TODO: skipped, don't manually reset GTPE2_COMMON for openXC7
+                    //(~plllock_reg2) && // TODO: skipped, don't manually reset GTPE2_COMMON for openXC7
                     (&(~resetdone_reg2))) fsm <= FSM_DRP_X16_START;
             end  
             //---------- Start DRP x16 -------------------------
@@ -490,7 +490,7 @@ module pipe_wrapper_gtx # (
             end  
             //---------- Wait for PLL Lock --------------------
             FSM_PLLLOCK : begin
-                if (plllock_reg2) // TODO: skipped, don't manually reset GTPE2_COMMON for openXC7
+                //if (plllock_reg2) // TODO: skipped, don't manually reset GTPE2_COMMON for openXC7
                     fsm <= FSM_GTRESET;
                 rst_cpllreset  <= 1'd0;
             end
@@ -647,6 +647,8 @@ module pipe_wrapper_gtx # (
         .CPLL_FBDIV_45                  (CPLL_FBDIV_45),    // =5
         .CPLL_FBDIV                     (CPLL_FBDIV),       // =5 for 100 MHz → 2500 MHz VCO
         .CPLL_CFG                       (CPLL_CFG),         // charge-pump config, silicon-dependent
+        .CPLL_INIT_CFG                  (24'h00001E),
+        .CPLL_LOCK_CFG                  (16'h01E8),
 
         .TXOUT_DIV                      (OUT_DIV),          // =2: VCO/2 for line rate
         .RXOUT_DIV                      (OUT_DIV),
@@ -662,6 +664,7 @@ module pipe_wrapper_gtx # (
         .RXPCSRESET_TIME                ( 5'b00001),
         .TXPMARESET_TIME                ( 5'b00011),
         .RXPMARESET_TIME                ( 5'b00011), // Optimized for sim
+        .RXISCANRESET_TIME              ( 5'b00001),
         //TX Data Attributes
         .TX_DATA_WIDTH                  (20),        // 2-byte external datawidth for Gen1/Gen2
         .TX_INT_DATAWIDTH               (0),
@@ -675,7 +678,10 @@ module pipe_wrapper_gtx # (
         .RX_CM_TRIM                        ( 3'b010),  // Select 800mV, Changed from 3 to 4-bits, optimized for IES
         .TX_EIDLE_ASSERT_DELAY          (PCIE_TX_EIDLE_ASSERT_DELAY),// Optimized for sim
         .TX_EIDLE_DEASSERT_DELAY        (3'b100),
+        .PD_TRANS_TIME_FROM_P2          (12'h03C),
         .PD_TRANS_TIME_NONE_P2          ( 8'h09),
+        .PD_TRANS_TIME_TO_P2            ( 8'h64),
+        .TRANS_TIME_RATE                ( 8'h0E),
         //Electrical Command Attributes
         .TX_DRIVE_MODE                  ("PIPE"),      // Gen1/Gen2 = PIPE, Gen3 = PIPEGEN3
         .TX_DEEMPH0                     ( 5'b10100),   //  6.0 dB
@@ -703,12 +709,16 @@ module pipe_wrapper_gtx # (
         .PMA_RSV                        (32'h00018480),
         .PMA_RSV2                       (16'h2050),
         .RX_BIAS_CFG                    (12'b000000000100),
+        .TERM_RCAL_CFG                  (5'b10000),
+        .TERM_RCAL_OVRD                 ( 1'b0),
         //CDR Attributes
         .RXCDR_CFG                      (RXCDR_CFG_GTX),       // Optimized for IES                       
         .RXCDR_LOCK_CFG                 ( 6'b010101),                           // [5:3] Window Refresh, [2:1] Window Size, [0] Enable Detection (sensitive lock = 6'b111001)  CHECK
         .RXCDR_HOLD_DURING_EIDLE        ( 1'd1),                                // Hold  RX CDR           on electrical idle for Gen1/Gen2
         .RXCDR_FR_RESET_ON_EIDLE        ( 1'd0),                                // Reset RX CDR frequency on electrical idle for Gen3
         .RXCDR_PH_RESET_ON_EIDLE        ( 1'd0),                                // Reset RX CDR phase     on electrical idle for Gen3
+        .RXCDRFREQRESET_TIME            ( 5'b00001),
+        .RXCDRPHRESET_TIME              ( 5'b00001),
         //LPM Attributes               
         .RXLPM_HF_CFG                   (14'h00F0),
         .RXLPM_LF_CFG                   (14'h00F0),
@@ -726,7 +736,7 @@ module pipe_wrapper_gtx # (
         .RX_DFE_VP_CFG                  (17'b00011111100000011),
         .RX_DFE_XYD_CFG                 (13'h0000),
         //OS Attributes 
-        .RX_OS_CFG                      (13'b0000010000000),
+        .RX_OS_CFG                      (13'h0080),
         //Eye Scan Attributes 
         .ES_EYE_SCAN_EN                 ("FALSE"),
         .ES_HORZ_OFFSET                 (12'd0),
@@ -735,6 +745,7 @@ module pipe_wrapper_gtx # (
         .TXBUF_RESET_ON_RATE_CHANGE     ("TRUE"),
         //RX Buffer Attributes                
         .RXBUF_EN                       ("TRUE"),
+        .RX_BUFFER_CFG                  ( 6'd0),
         .RX_DEFER_RESET_BUF_EN          ("TRUE"),
         .RXBUF_ADDR_MODE                ("FULL"),
         .RXBUF_EIDLE_HI_CNT                ( 4'd4),   // Optimized for sim
@@ -746,10 +757,21 @@ module pipe_wrapper_gtx # (
         .RXBUF_THRESH_OVRD              ("FALSE"),
         .RXBUF_THRESH_OVFLW             (61),
         .RXBUF_THRESH_UNDFLW            ( 4),
+        .RXBUFRESET_TIME                ( 5'b00001),
         //TX Sync Attributes                
+        .TXPH_CFG                       (16'h0780),
         .TXPH_MONITOR_SEL               ( 5'd0),
-        .RXPHDLY_CFG                    (24'h004020),
-        .RX_DDI_SEL                     (6'd0),
+        .TXDLY_CFG                      (16'h001F),
+        .TXDLY_LCFG                        ( 9'h030),
+        //RX Sync Attributes            
+        .RXDFELPMRESET_TIME             (7'h0001111),
+        .RXPH_CFG                       (24'd0),
+        .RXPH_MONITOR_SEL               ( 5'd0),
+        .RXPHDLY_CFG                    (24'h004020), // [19] : 1 = full range, 0 = half range
+        .RXDLY_CFG                      (16'h001F),
+        .RXDLY_LCFG                        ( 9'h030),
+        .RXDLY_TAP_CFG                  (16'd0),
+        .RX_DDI_SEL                        ( 6'd0),
         //Comma Alignment Attributes            
         .ALIGN_COMMA_DOUBLE             ("FALSE"),
         .ALIGN_COMMA_ENABLE             (10'b1111111111),// PCIe
@@ -811,14 +833,35 @@ module pipe_wrapper_gtx # (
         //PRBS & Loopback Attributes 
         .RXPRBS_ERR_LOOPBACK             ( 1'd0),
         .TX_LOOPBACK_DRIVE_HIZ           ("FALSE"),
+        .RXOOB_CFG                      ( 7'b0000110),
         //MISC 
         .DMONITOR_CFG                   (24'h000B01),
-        .RX_DEBUG_CFG                   (12'd0)
-        //   Not used so far, maybe required for openxc7:
-        //   ACJTAG-related 
-        //   SAS and SATA related
-        //   CFOK_CFG-related, RXPI, TXPI
-    ) gtxe2_channel_i (
+        .RX_DEBUG_CFG                   (12'd0),
+        .TST_RSV                        (32'd0),
+        .UCODEER_CLR                    ( 1'd0),
+
+        .SAS_MAX_COM                (7'd64),
+        .SAS_MIN_COM                (6'd36),
+        .SATA_BURST_SEQ_LEN         (4'b111),
+        .SATA_BURST_VAL             (3'd4),
+        .SATA_EIDLE_VAL             (3'd4),
+        .SATA_MAX_BURST             (4'd8),
+        .SATA_MAX_INIT              (5'd21),
+        .SATA_MAX_WAKE              (3'd7),
+        .SATA_MIN_BURST             (3'd4),
+        .SATA_MIN_INIT              (4'd12),
+        .SATA_MIN_WAKE              (3'd4),
+
+        .ES_CONTROL                 (1'd0),
+        .ES_ERRDET_EN               ("FALSE"),
+        .ES_HORZ_OFFSET             (1'd0),
+        .ES_PMA_CFG                 (1'd0),
+        .ES_PRESCALE                (1'd0),
+        .ES_QUALIFIER               (1'd0),
+        .ES_QUAL_MASK               (1'd0),
+        .ES_SDATA_MASK              (1'd0),
+        .ES_VERT_OFFSET             (1'd0)
+    )gtxe2_channel_i(
 		//Clock 
         .GTGREFCLK                      (1'd0),
         .GTREFCLK0                      (PIPE_CLK), // 100 MHz refclk to CPLL

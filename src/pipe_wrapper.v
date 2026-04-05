@@ -976,7 +976,7 @@ module pipe_wrapper # (
         .ES_QUAL_MASK               (1'd0),
         .ES_SDATA_MASK              (1'd0),
         .ES_VERT_OFFSET             (1'd0)
-     )gtpe2_channell_i(
+     )gtpe2_channel_i(
         //Clock 
         .PLL0CLK                        (qpll_qplloutclk[0]),
         .PLL1CLK                        (qpll_qplloutclk1),
