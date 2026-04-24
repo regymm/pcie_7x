@@ -8,7 +8,8 @@ module pcie_7x_top_aximm # (
   parameter KEEP_WIDTH          = C_DATA_WIDTH / 8, // TSTRB width
   parameter NO_RESET            = 0,
   parameter ENABLE_GEN2         = 0,
-  parameter GT_DEVICE           = "GTP"
+  parameter GT_DEVICE           = "GTP",
+  parameter CFG_DEV_ID          = 16'h9999
 ) (
   output      pci_exp_txp,
   output      pci_exp_txn,
@@ -18,13 +19,31 @@ module pcie_7x_top_aximm # (
   input       sys_clk_p,
   input       sys_clk_n,
   input       sys_rst_n,
+
+  //input       aux_clk_in,
   
   output      [3:0] led
 );
   // basic state monitoring by LEDs
-  assign led = ~{2'b00, user_reset, user_lnk_up};
+  //reg [3:0] led_reg;
+  //assign led = {1'b0, 1'b0, gt_reset_fsm[4:3]};
+  //assign led = ~{2'b00, user_reset, user_lnk_up};
   wire [4:0]gt_reset_fsm;
   wire [5:0]pl_ltssm_state;
+  wire pipe_mmcm_lock;
+  reg [31:0]cnt = 0;
+  always @ (posedge user_clk /*sys_clk*/ /*pipe_txoutclk_out*/) begin
+      cnt <= cnt + 1;
+      //if (cnt[28:27] == 2'b00) begin
+          //led_reg <= {2'b01, gt_reset_fsm[4:3]};
+      //end else begin
+          //led_reg <= {1'b0, gt_reset_fsm[2:0]};
+      //end
+  end
+  //assign led = led_reg;
+  assign led = {3'b111, pipe_mmcm_lock};
+  //assign led = cnt[27:24];
+  //assign led = {cnt[25:24], gt_reset_fsm[1:0]};
   //assign led = ~pl_ltssm_state[3:0];
   //assign led = ~pl_ltssm_state[5:2];
   //assign led = ~gt_reset_fsm[3:0];
@@ -101,6 +120,7 @@ module pcie_7x_top_aximm # (
 
   wire                                        sys_rst_n_c;
   wire                                        sys_clk;
+  wire                                        pipe_txoutclk_out;
 
   reg                                         user_reset_q;
   reg                                         user_lnk_up_q;
@@ -122,7 +142,41 @@ module pcie_7x_top_aximm # (
     IBUF   sys_reset_n_ibuf (.O(sys_rst_n_c), .I(sys_rst_n));
   end
   endgenerate
+
   IBUFDS_GTE2 refclk_ibuf (.O(sys_clk), .ODIV2(), .I(sys_clk_p), .CEB(1'b0), .IB(sys_clk_n));
+      //wire sys_clk_0;
+      //IBUFDS_GTE2 refclk_ibuf (.O(sys_clk_0), .ODIV2(), .I(sys_clk_p), .CEB(1'b0), .IB(sys_clk_n));
+      //wire sys_clk_ibufds;
+//      wire pll_fb;
+//      wire clkout0;
+//      wire clkout1;
+//      wire pll_locked;
+//      PLLE2_ADV #(
+//        // Parameters.
+//        .CLKFBOUT_MULT  (3'd5),
+//        .CLKIN1_PERIOD  (5.0),
+//        .CLKOUT0_DIVIDE (4'd10), // 100 Mhz
+//        .CLKOUT0_PHASE  (1'd0),
+//        .CLKOUT1_DIVIDE (4'd8), // 125 MHz
+//        .CLKOUT1_PHASE  (1'd0),
+//        .DIVCLK_DIVIDE  (1'd1),
+//        .REF_JITTER1    (0.01),
+//        .STARTUP_WAIT   ("FALSE")
+//    ) PLLE2_ADV (
+//        // Inputs.
+//        .CLKFBIN  (pll_fb),
+//        .CLKIN1   (aux_clk_in),
+//        .PWRDWN   (1'b0),
+//        .RST      (!sys_rst_n),
+
+//        // Outputs.
+//        .CLKFBOUT (pll_fb),
+//        .CLKOUT0  (clkout0),
+//        .CLKOUT1  (clkout1),
+//        .LOCKED   (pll_locked)
+//    );
+//    BUFG BUFG( .I (clkout0), .O (sys_clk));
+    //BUFG refclk_bufg (.O(sys_clk), .I(sys_clk_ibufds));
 
   always @(posedge user_clk) begin
     user_reset_q  <= user_reset;
@@ -138,7 +192,7 @@ pcie_7x # (
   .LINK_STATUS_SLOT_CLOCK_CONFIG  ( "TRUE" ),
   .USER_CLK_FREQ                  ( ENABLE_GEN2 ? 2 : 1 ), // 62.5 MHz for Gen1, 125 MHz for Gen2
 
-  .CFG_DEV_ID                     (16'h9999),
+  .CFG_DEV_ID                     ( CFG_DEV_ID ),
   .BAR0                           (32'hFFFFF000),
 
    //can reduce RAM usage (and performance) by tuning parameters
@@ -158,6 +212,7 @@ pcie_7x # (
   .pci_exp_txp                               ( pci_exp_txp ),
   .pci_exp_rxn                               ( pci_exp_rxn ),
   .pci_exp_rxp                               ( pci_exp_rxp ),
+  .pipe_mmcm_lock                            ( pipe_mmcm_lock ),
   .pipe_mmcm_rst_n                            ( 1 ),
   // Common
   .user_clk_out                              ( user_clk ),
@@ -225,7 +280,8 @@ pcie_7x # (
   .sys_clk                                   ( sys_clk ),
   .sys_rst_n                                 ( sys_rst_n_c ),
   .gt_reset_fsm                              ( gt_reset_fsm ),
-  .pl_ltssm_state                            ( pl_ltssm_state )
+  .pl_ltssm_state                            ( pl_ltssm_state ),
+  .pipe_txoutclk_out                         ( pipe_txoutclk_out )
 );
 //*/
 // -- GTX original IP working

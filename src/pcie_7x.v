@@ -1078,11 +1078,10 @@ assign PIPE_USERCLK1_IN = pipe_userclk1_in;
 assign PIPE_USERCLK2_IN = pipe_userclk2_in;
 assign PIPE_RXUSRCLK_IN = pipe_rxusrclk_in;
 assign PIPE_MMCM_LOCK_IN = pipe_mmcm_lock_in;
-assign pipe_pclk_sel_out = pipe_tx_rate;
-assign pipe_txoutclk_out = PIPE_TXOUTCLK_OUT;
 end
 endgenerate
-
+assign pipe_pclk_sel_out = pipe_tx_rate;
+assign pipe_txoutclk_out = PIPE_TXOUTCLK_OUT;
 assign pipe_mmcm_lock = PIPE_MMCM_LOCK_IN;
 
 localparam USERCLK2_FREQ   =  (USER_CLK2_DIV2 == "FALSE") ? USER_CLK_FREQ :

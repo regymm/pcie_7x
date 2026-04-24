@@ -127,7 +127,7 @@ module pipe_wrapper_gtx # (
     parameter PCIE_SIM_TX_EIDLE_DRIVE_LEVEL = "1",          // PCIe sim TX electrical idle drive level 
     parameter PCIE_GT_DEVICE                = "GTX",        // PCIe GT device, unused actually
     parameter PCIE_USE_MODE                 = "3.0",        // PCIe use mode, 3.0 is necessary!
-    parameter PCIE_PLL_SEL                  = "CPLL",       // PCIe PLL select for Gen1/Gen2 (GTX/GTH) only
+    parameter PCIE_PLL_SEL                  = "CPLL",       // PCIe PLL select for Gen1/Gen2 (GTX/GTH) only: only CPLL supported for Gen1/Gen2!
     parameter PCIE_AUX_CDR_GEN3_EN          = "TRUE",       // PCIe AUX CDR for Gen3 (GTH 2.0) only
     parameter PCIE_LPM_DFE                  = "LPM",        // PCIe LPM or DFE mode for Gen1/Gen2 only
     parameter PCIE_LPM_DFE_GEN3             = "DFE",        // PCIe LPM or DFE mode for Gen3      only
@@ -257,6 +257,11 @@ module pipe_wrapper_gtx # (
     //---------- GTX CPLL lock -----------------------
     wire             gt_cplllock;
 
+    //---------- GTX QPLL (GTXE2_COMMON) output wires ----
+    wire             qpll_qplloutclk;
+    wire             qpll_qplloutrefclk;
+    wire             qpll_qplllock;
+
     //---------- GTX Wrapper Output ------------------------
     wire             gt_txresetdone;
     wire             gt_rxresetdone;
@@ -286,7 +291,7 @@ module pipe_wrapper_gtx # (
     localparam CPLL_FBDIV_45   = 5;
     localparam CPLL_FBDIV      = (PCIE_REFCLK_FREQ == 2) ? 2 :
                                  (PCIE_REFCLK_FREQ == 1) ? 4 : 5;
-    localparam OUT_DIV         = 2;
+    localparam OUT_DIV         = (PCIE_PLL_SEL == "QPLL") ? 8 /* 4*/ : 2;
 
     // CLK25 divider: reference clock divided down to ~25 MHz for internal calibration
     localparam CLK25_DIV       = (PCIE_REFCLK_FREQ == 2) ? 10 :
@@ -364,7 +369,7 @@ module pipe_wrapper_gtx # (
     localparam FSM_TXSYNC_DONE1     = 5'hF;
     localparam FSM_TXSYNC_DONE      = 5'h10;
     reg [4:0] fsm =  FSM_CFG_WAIT;
-    assign gt_reset_fsm = fsm;
+    assign gt_reset_fsm = {3'b0, qpll_qplllock, gt_cplllock}; //fsm;
 
     wire [PCIE_LANE-1:0]     drp_done_reg2;
     wire [PCIE_LANE-1:0]     rxpmaresetdone_reg2;
@@ -622,18 +627,85 @@ module pipe_wrapper_gtx # (
     //end
     //wire cpllpd   = 1'b0;
     //wire cpllrst  = 1'b0;
-    (* equivalent_register_removal="no" *)  reg [95:0] cpllpd_wait = 96'hFFFFFFFFFFFFFFFFFFFFFFFF;             
-    (* equivalent_register_removal="no" *)  reg [127:0] cpllreset_wait = 128'h000000000000000000000000000000FF;
-    always @(posedge PIPE_CLK)                                                                            
-    begin                                                                                                      
-        cpllpd_wait <= {cpllpd_wait[94:0], 1'b0};                                                              
-        cpllreset_wait <= {cpllreset_wait[126:0], 1'b0};                                                       
-    end                                                                                                        
-    wire cpllpd = cpllpd_wait[95];                                                                    
-    wire cpllrst = cpllreset_wait[127];                                                             
+    //(* equivalent_register_removal="no" *)  reg [95:0] cpllpd_wait = 96'hFFFFFFFFFFFFFFFFFFFFFFFF;             
+    //(* equivalent_register_removal="no" *)  reg [127:0] cpllreset_wait = 128'h000000000000000000000000000000FF;
+    //always @(posedge PIPE_CLK)                                                                            
+    //begin                                                                                                      
+        //cpllpd_wait <= {cpllpd_wait[94:0], 1'b0};                                                              
+        //cpllreset_wait <= {cpllreset_wait[126:0], 1'b0};                                                       
+    //end                                                                                                        
+    //wire cpllpd = cpllpd_wait[95];                                                                    
+    //wire cpllrst = cpllreset_wait[127];                                                             
 
+    localparam BIAS_CFG   = ((PCIE_USE_MODE == "1.0") && (PCIE_PLL_SEL == "CPLL"))
+                            ? 64'h0000042000001000 : 64'h0000040000001000;
 
-    // No GTXE2_COMMON needed: use CPLL, clk into GTREFCLK0
+    // actually unused, just for locking test
+    GTXE2_COMMON #
+    (
+        .SIM_QPLLREFCLK_SEL             ( 3'b001),
+        .SIM_RESET_SPEEDUP              (PCIE_SIM_SPEEDUP),
+        .SIM_VERSION                    (PCIE_USE_MODE),
+
+        .QPLL_CFG                       (27'h06801C1), 
+        .QPLL_COARSE_FREQ_OVRD          ( 6'b010000),
+        .QPLL_COARSE_FREQ_OVRD_EN       ( 1'd0),
+        .QPLL_CP                        (10'h01F),
+        .QPLL_CP_MONITOR_EN             ( 1'd0),
+        .QPLL_DMONITOR_SEL              ( 1'd0),
+        .QPLL_FBDIV                     (10'b0011100000 /*QPLL_FBDIV*/), // Table 2-16, Page 59, UG476
+        .QPLL_FBDIV_MONITOR_EN          ( 1'd0),
+        .QPLL_FBDIV_RATIO               ( 1'd1),
+        .QPLL_LOCK_CFG                  (16'h21E8),
+        .QPLL_LPF                       ( 4'hD),
+        .QPLL_REFCLK_DIV                (1),
+
+        .BIAS_CFG                       (BIAS_CFG)
+    )
+    gtxe2_common_i
+    (
+        //.GTGREFCLK                      ( 1'd0),
+        .GTREFCLK0                      (PIPE_CLK),             // IBUFDS_GTE2 output
+        //.GTREFCLK1                      ( 1'd0),
+        //.GTNORTHREFCLK0                 ( 1'd0),
+        //.GTNORTHREFCLK1                 ( 1'd0),
+        //.GTSOUTHREFCLK0                 ( 1'd0),
+        //.GTSOUTHREFCLK1                 ( 1'd0),
+        .QPLLLOCKDETCLK                 (1'b0),
+        .QPLLLOCKEN                     ( 1'd1),
+        .QPLLREFCLKSEL                  ( 3'd1),
+        .QPLLRSVD1                      (16'd0),
+        .QPLLRSVD2                      ( 5'b11111),
+
+        .QPLLOUTCLK                     (qpll_qplloutclk),
+        .QPLLOUTREFCLK                  (qpll_qplloutrefclk),
+        .QPLLLOCK                       (qpll_qplllock),
+        .QPLLFBCLKLOST                  (),
+        .QPLLREFCLKLOST                 (),
+        .QPLLDMONITOR                   (),
+
+        .QPLLPD                         ( 1'd0),                // keep powered — CPLL mode
+        .QPLLRESET                      ( 1'd0),
+        .QPLLOUTRESET                   ( 1'd0),
+
+        .DRPCLK                         (1'b0),
+        .DRPADDR                        ( 8'd0),
+        .DRPEN                          ( 1'd0),
+        .DRPDI                          (16'd0),
+        .DRPWE                          ( 1'd0),
+        .DRPDO                          (),
+        .DRPRDY                         (),
+
+        .BGBYPASSB                      ( 1'd1),
+        .BGMONITORENB                   ( 1'd1),
+        .BGPDB                          ( 1'd1),
+        .BGRCALOVRD                     ( 5'd31),
+
+        .PMARSVD                        ( 8'd0),
+        .RCALENB                        ( 1'd1),
+        .REFCLKOUTMONITOR               ()
+    );
+
     GTXE2_CHANNEL # (
 
         //Simulation Attributes
@@ -645,7 +717,7 @@ module pipe_wrapper_gtx # (
         //Clock Attributes 
         .CPLL_REFCLK_DIV                (CPLL_REFCLK_DIV),  // =1
         .CPLL_FBDIV_45                  (CPLL_FBDIV_45),    // =5
-        .CPLL_FBDIV                     (CPLL_FBDIV),       // =5 for 100 MHz → 2500 MHz VCO
+        .CPLL_FBDIV                     (CPLL_FBDIV),       // =5 for 100 MHz → 2500 MHz VCO, Page 48, UG476
         .CPLL_CFG                       (CPLL_CFG),         // charge-pump config, silicon-dependent
         .CPLL_INIT_CFG                  (24'h00001E),
         .CPLL_LOCK_CFG                  (16'h01E8),
@@ -837,7 +909,7 @@ module pipe_wrapper_gtx # (
         //MISC 
         .DMONITOR_CFG                   (24'h000B01),
         .RX_DEBUG_CFG                   (12'd0),
-        .TST_RSV                        (32'd0),
+        .TST_RSV                        (32'd0), 
         .UCODEER_CLR                    ( 1'd0),
 
         .SAS_MAX_COM                (7'd64),
@@ -854,7 +926,7 @@ module pipe_wrapper_gtx # (
 
         .ES_CONTROL                 (1'd0),
         .ES_ERRDET_EN               ("FALSE"),
-        .ES_HORZ_OFFSET             (1'd0),
+        //.ES_HORZ_OFFSET             (1'd0),
         .ES_PMA_CFG                 (1'd0),
         .ES_PRESCALE                (1'd0),
         .ES_QUALIFIER               (1'd0),
@@ -864,20 +936,20 @@ module pipe_wrapper_gtx # (
     )gtxe2_channel_i(
 		//Clock 
         .GTGREFCLK                      (1'd0),
-        .GTREFCLK0                      (PIPE_CLK), // 100 MHz refclk to CPLL
+        .GTREFCLK0                      (PCIE_PLL_SEL == "QPLL" ? 0 : PIPE_CLK), // 100 MHz refclk to CPLL
         .GTREFCLK1                      (1'd0),
         .GTNORTHREFCLK0                 (1'd0),
         .GTNORTHREFCLK1                 (1'd0),
         .GTSOUTHREFCLK0                 (1'd0),
         .GTSOUTHREFCLK1                 (1'd0),
-        .QPLLCLK                        (1'd0), // QPLL unused
-        .QPLLREFCLK                     (1'd0),
+        .QPLLCLK                        (qpll_qplloutclk),
+        .QPLLREFCLK                     (qpll_qplloutrefclk),
         .TXUSRCLK                       (PIPE_PCLK_IN),
         .RXUSRCLK                       (PIPE_RXUSRCLK_IN),
         .TXUSRCLK2                      (PIPE_PCLK_IN),
         .RXUSRCLK2                      (PIPE_RXUSRCLK_IN),
-        .TXSYSCLKSEL                    (0),
-        .RXSYSCLKSEL                    (0),
+        .TXSYSCLKSEL                    (PCIE_PLL_SEL == "QPLL" ? 2'd3 : 2'd0),
+        .RXSYSCLKSEL                    (PCIE_PLL_SEL == "QPLL" ? 2'd3 : 2'd0),
         .TXOUTCLKSEL                    (3'd3),
         .RXOUTCLKSEL                    (3'b0),
         // CPLL
@@ -896,8 +968,10 @@ module pipe_wrapper_gtx # (
         .RXOUTCLKPCS                    (),
         .RXCDRLOCK                      (gt_rxcdrlock),
         //Reset 
-        .CPLLPD                         (cpllpd | 1'b0),
-        .CPLLRESET                      (cpllrst | rst_cpllreset),
+        //.CPLLPD                         (cpllpd | 1'b0),
+        //.CPLLRESET                      (cpllrst | rst_cpllreset),
+        .CPLLPD                         (1'b0),
+        .CPLLRESET                      (1'b0),
         .TXUSERRDY                      (rst_userrdy),
         .RXUSERRDY                      (rst_userrdy),
         .CFGRESET                       (1'd0),
@@ -1095,6 +1169,7 @@ module pipe_wrapper_gtx # (
     assign gt_txsyncout  = {PCIE_LANE{1'b0}};
     assign gt_rxsyncout  = {PCIE_LANE{1'b0}};
     assign PIPE_RXPMARESETDONE = {PCIE_LANE{1'b0}};
+    //assign PIPE_TXOUTCLK_OUT = qpll_qplloutclk;
 endmodule
 
 module two_beats #(
