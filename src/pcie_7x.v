@@ -440,8 +440,22 @@ wire trn_lnk_up;
 reg user_reset_int;
 reg bridge_reset_int;
 reg bridge_reset_d;
-always @(posedge user_clk_out) begin
+(* ASYNC_REG = "TRUE", SHIFT_EXTRACT = "NO" *) reg [1:0] sys_rst_n_userclk = 2'b00;
+always @(posedge user_clk_out or negedge sys_rst_n) begin
+	if (!sys_rst_n)
+		sys_rst_n_userclk <= 2'b00;
+	else
+		sys_rst_n_userclk <= {sys_rst_n_userclk[0], 1'b1};
+end
+
+always @(posedge user_clk_out or negedge sys_rst_n) begin
 	if (!sys_rst_n) begin
+		user_lnk_up <= 1'b0;
+		user_reset_int <= 1'b1;
+		user_reset_out <= 1'b1;
+		bridge_reset_int <= 1'b1;
+		bridge_reset_d <= 1'b1;
+	end else if (!sys_rst_n_userclk[1]) begin
 		user_lnk_up <= 1'b0;
 		user_reset_int <= 1'b1;
 		user_reset_out <= 1'b1;
@@ -1255,4 +1269,3 @@ pipe_wrapper # (
 );
 end endgenerate
 endmodule
-
