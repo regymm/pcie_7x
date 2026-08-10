@@ -1,6 +1,6 @@
 ## pcie_7x
 
-PCIe Endpoint on Xilinx 7-Series FPGAs using the PCIE_2_1 hard block and GTP transceivers. No proprietary Vivado IP cores! Compatible with [openXC7](https://github.com/openXC7)! 
+PCIe Endpoint on Xilinx 7-Series FPGAs using the PCIE_2_1 hard block and GTP/GTX transceivers. No proprietary Vivado IP cores! Compatible with [openXC7](https://github.com/openXC7)! 
 
 #### Clock Structure
 
@@ -47,13 +47,21 @@ Reset                                              | Reset |
 
 For PCIE_2_1 parameters and port definitions, please refer to [UG477](https://docs.amd.com/v/u/en-US/ug477_7Series_IntBlock_PCIe). 
 
-#### Supported Modes
+#### Supported FPGAs and Modes
 
-PCIe Gen1 x1, PCIe Gen2 x1
+PCIe Gen1 x1, PCIe Gen2 x1 on AMD/Xilinx Artix 7 and Kintex 7
 
 #### Supported Boards
 
-[Alinx AC7100B SoM](https://www.en.alinx.com/detail/498) (Artix 7 100t), [Wavelet uSDR](https://www.crowdsupply.com/wavelet-lab/usdr) (Artix 7 35t)
+[Alinx AC7100B SoM](https://www.en.alinx.com/detail/498) (Artix 7 100t), [Wavelet uSDR](https://www.crowdsupply.com/wavelet-lab/usdr) (Artix 7 35t), [YPCB](https://github.com/TiferKing/ypcb_00338_1p1_hack) (Kintex 7 480t), HVS (Kintex 7 70t)
+
+#### Tested Hosts
+
+AMD 3700X on B450m (All boards)
+
+Intel i3 13th Gen on B760m (Wavelet uSDR with base board)
+
+Raspberry Pi 5 (Wavelet uSDR in M.2 mode, YPCB Kintex 7 480t with M.2 converter and external power supply)
 
 #### Bitstream with openXC7 quickstart!
 
@@ -68,6 +76,8 @@ Build and run: [Artix 7 PCIe](./Artix_7_PCIe.md)
 PCIe Gen2 / board without reset: [uSDR Guide](uSDR_Guide.md)
 
 MSI interrupt / kernel driver: [MSI Interrupt](MSI_Interrupt.md)
+
+Standard PCIe cards on Raspberry Pi: [YPCB_Kintex7_RPi5](https://gist.github.com/regymm/4cfc4f174e3000f97810eb97d52f8ef3)
 
 #### Funding
 
