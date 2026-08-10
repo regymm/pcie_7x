@@ -10,7 +10,7 @@ set_property PACKAGE_PIN F2 [get_ports {pci_exp_txp}]
 set_property PACKAGE_PIN F1 [get_ports {pci_exp_txn}]
 
 # Reset
-set_property PACKAGE_PIN Y28 [get_ports {sys_rst_n}]
+set_property PACKAGE_PIN Y26 [get_ports {sys_rst_n}]
 set_property PULLUP true [get_ports {sys_rst_n}]
 set_property IOSTANDARD LVCMOS33 [get_ports {sys_rst_n}]
 
