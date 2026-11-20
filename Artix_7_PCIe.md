@@ -173,8 +173,8 @@ Read outside resource space, stopping
 LEDs on board can be used to show status (there's Vivado ILA, which is not available on openXC7). When things doesn't work, troubleshooting can be done in this order: 
 
 - [ ] Check if design works in **simulation**. 
-- [ ] Check if design works with **code boot without JTAG connected** / host PC **reboot**. 
-- [ ] Check if design works in PCIe **Gen1** mode. 
+- [ ] Check if design works with **cold boot without JTAG connected** / host PC **reboot**. 
+- [ ] Check if design works in PCIe **Gen1** mode. (However, note: training always starts from Gen1)
 - [ ] Check if **reset** is asserted then de-asserted on real hardware. 
 - [ ] Check if **clock** outputs are valid on real hardware. 
 - [ ] Check if **GT** initialization `[4:0]gt_reset_fsm` proceeds correctly. 
@@ -183,3 +183,15 @@ LEDs on board can be used to show status (there's Vivado ILA, which is not avail
 - [ ] Check if PCIE_2_1 Block **Ram**/Distributed Ram has correct size and is working. 
 
 As long as the PCIe device can be shown in `lspci`, debugging becomes slightly easier. 
+
+After `lspci` show-up: 
+
+- [ ] Device is **enabled**
+- [ ] Tried host PC **reboot** instead of **rescan**, especially with **BAR**-related changes. 
+- [ ] BAR readback is not all-0xffffffff, read/write won't be very laggy and won't cause host hang
+- [ ] The latest bitstream is loaded. Can use **device ID** to identify -- recommended to change & check it often!  
+
+Misc debugging tips:
+
+- [ ] Using latest version or confirmed stable version of OpenXC7
+- [ ] Try fallback to distributed RAM in `src/pcie_brams.v` 
