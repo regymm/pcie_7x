@@ -63,10 +63,14 @@ Intel i3 13th Gen on B760m (Wavelet uSDR with base board)
 
 Raspberry Pi 5 (Wavelet uSDR in M.2 mode, YPCB Kintex 7 480t with M.2 converter and external power supply)
 
+Raspberry Pi CM5 + PI7C9X2G608 Bridge (Custom board, YPCB Kintex 7 480t)
+
 #### Bitstream with openXC7 quickstart!
 
 ```
 docker run -it --rm -v .:/mnt regymm/openxc7 make -C /mnt -f Makefile.alinx_100t.openxc7
+# Kintex 7 480t latest build with MSI & UART kernel driver demo!!
+docker run -it --rm -v .:/mnt regymm/openxc7:202611 make -C /mnt -f Makefile.ypcb_k480t_uart.openxc7
 ```
 
 #### Documentation
@@ -78,6 +82,8 @@ PCIe Gen2 / board without reset: [uSDR Guide](uSDR_Guide.md)
 MSI interrupt / kernel driver: [MSI Interrupt](MSI_Interrupt.md)
 
 Standard PCIe cards on Raspberry Pi: [YPCB_Kintex7_RPi5](https://gist.github.com/regymm/4cfc4f174e3000f97810eb97d52f8ef3)
+
+TentaLab RPi CM5 - PCIe bridge - Kintex 7 FPGA: [Accelerator platform](https://github.com/regymm/PCIe-DMA-DDR3-Accelerator/tree/main/1-baseboard), [Video demo]()
 
 #### Funding
 

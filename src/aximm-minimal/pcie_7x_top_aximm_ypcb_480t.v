@@ -25,7 +25,7 @@ module pcie_7x_top_aximm_ypcb_480t (
 //assign led = cnt[27:25];
 pcie_7x_top_aximm #(
     .NO_RESET(0),
-    .ENABLE_GEN2(1),
+    .ENABLE_GEN2(0),
     .GT_DEVICE("GTX"),
     .CFG_DEV_ID(16'h0480)
 ) pcie_7x_top_aximm_i (

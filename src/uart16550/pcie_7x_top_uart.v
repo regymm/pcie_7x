@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: CERN-OHL-P
+// Designed to run on OCP-TAP Time Card with ALINX 100T module, 4 SMA ports
 // Author: regymm
 `timescale 1ns / 1ps
 
@@ -7,6 +8,8 @@ module pcie_7x_top_uart # (
   parameter KEEP_WIDTH          = C_DATA_WIDTH / 8, // TSTRB width
   parameter NO_RESET            = 0,
   parameter ENABLE_GEN2         = 0,
+  parameter GT_DEVICE           = "GTP",
+  parameter CFG_DEV_ID          = 16'h9999,
   parameter MULTI_VECTOR_MSI    = 0 // 0 for single vector, 1 for 32 vectors
 ) (
   output      pci_exp_txp,
@@ -111,7 +114,9 @@ pcie_7x # (
   .LINK_STATUS_SLOT_CLOCK_CONFIG  ( "TRUE" ),
   .USER_CLK_FREQ                  ( ENABLE_GEN2 ? 2 : 1 ), // 62.5 MHz for Gen1, 125 MHz for Gen2
 
-  .CFG_DEV_ID                     (16'h9999),
+  .PCIE_GT_DEVICE                 ( GT_DEVICE ),
+  .PCIE_USE_MODE                  ( "3.0" ),
+  .CFG_DEV_ID                     ( CFG_DEV_ID ),
   .BAR0                           (32'hFFFFF000),
   .MSI_CAP_MULTIMSGCAP            (5),
 

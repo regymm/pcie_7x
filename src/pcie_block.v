@@ -874,6 +874,21 @@ module pcie_block # (
     .rdata      ( {unused_mim_rx_rdata, mim_rx_rdata} )
   );
 
+  // OpenXC7: add a small delay on PCIE_2_1 to satisfy hold condition: Vivado delays them in the router
+  wire [C_DATA_WIDTH-1:0] trn_td_h;
+  wire trn_trem_h, trn_tsof_h, trn_teof_h, trn_tsrc_rdy_h, trn_tcfg_gnt_h, trn_rdst_rdy_h;
+  wire [68:0] mim_tx_rdata_h;
+  wire [67:0] mim_rx_rdata_h;
+  wire cfg_interrupt_n_h;
+  wire [7:0] cfg_interrupt_di_h;
+  oxc7_hold_buf #(C_DATA_WIDTH) hb_td (trn_td, trn_td_h);
+  oxc7_hold_buf #(1) hb_trem (trn_trem, trn_trem_h);
+  oxc7_hold_buf #(5) hb_tctl ({trn_tsof, trn_teof, trn_tsrc_rdy, trn_tcfg_gnt, trn_rdst_rdy},
+                              {trn_tsof_h, trn_teof_h, trn_tsrc_rdy_h, trn_tcfg_gnt_h, trn_rdst_rdy_h});
+  oxc7_hold_buf #(69) hb_mimtx (mim_tx_rdata, mim_tx_rdata_h);
+  oxc7_hold_buf #(68) hb_mimrx (mim_rx_rdata, mim_rx_rdata_h);
+  oxc7_hold_buf #(9) hb_int ({cfg_interrupt_n, cfg_interrupt_di}, {cfg_interrupt_n_h, cfg_interrupt_di_h});
+
   PCIE_2_1 #(
     .AER_BASE_PTR                             ( AER_BASE_PTR ),
     .AER_CAP_ECRC_CHECK_CAPABLE               ( AER_CAP_ECRC_CHECK_CAPABLE ),
@@ -1158,24 +1173,24 @@ module pcie_block # (
     .VSEC_CAP_ON                              ( VSEC_CAP_ON ),
     .VSEC_CAP_VERSION                         ( VSEC_CAP_VERSION )
   ) pcie_2_1_block (
-    .TRNTD                               ({{(128-C_DATA_WIDTH){1'b0}},trn_td}          ),
-    .TRNTREM                             ({1'b0,trn_trem}          ),
+    .TRNTD                               ({{(128-C_DATA_WIDTH){1'b0}},trn_td_h}          ),
+    .TRNTREM                             ({1'b0,trn_trem_h}          ),
 
-    .TRNTSOF                             (trn_tsof                                   ),
-    .TRNTEOF                             (trn_teof                                   ),
-    .TRNTSRCRDY                          (trn_tsrc_rdy                               ),
+    .TRNTSOF                             (trn_tsof_h                                   ),
+    .TRNTEOF                             (trn_teof_h                                   ),
+    .TRNTSRCRDY                          (trn_tsrc_rdy_h                               ),
     .TRNTSRCDSC                          (trn_tsrc_dsc                               ),
     .TRNTERRFWD                          (trn_terrfwd                                ),
     .TRNTECRCGEN                         (trn_tecrc_gen                              ),
     .TRNTSTR                             (trn_tstr                                   ),
-    .TRNTCFGGNT                          (trn_tcfg_gnt                               ),
-    .TRNRDSTRDY                          (trn_rdst_rdy                               ),
+    .TRNTCFGGNT                          (trn_tcfg_gnt_h                               ),
+    .TRNRDSTRDY                          (trn_rdst_rdy_h                               ),
     .TRNRNPREQ                           (rx_np_req                                ),
     .TRNRFCPRET                          (1'b1                               ),
     .TRNRNPOK                            (rx_np_ok                                 ),
     .TRNFCSEL                            (fc_sel                                 ),
-    .MIMTXRDATA                          (mim_tx_rdata                               ),
-    .MIMRXRDATA                          (mim_rx_rdata                               ),
+    .MIMTXRDATA                          (mim_tx_rdata_h                               ),
+    .MIMRXRDATA                          (mim_rx_rdata_h                               ),
     .TRNTDLLPDATA                        (32'b0                             ),
     .TRNTDLLPSRCRDY                      (1'b0                          ),
     .LL2TLPRCV                           (1'b0                                ),
@@ -1288,8 +1303,8 @@ module pcie_block # (
     .CFGERRNORECOVERYN                   (cfg_err_norecovery_n                       ),
     .CFGERRAERHEADERLOG                  (cfg_err_aer_headerlog                      ),
     .CFGERRTLPCPLHEADER                  (cfg_err_tlp_cpl_header                     ),
-    .CFGINTERRUPTN                       (cfg_interrupt_n                            ),
-    .CFGINTERRUPTDI                      (cfg_interrupt_di                           ),
+    .CFGINTERRUPTN                       (cfg_interrupt_n_h                            ),
+    .CFGINTERRUPTDI                      (cfg_interrupt_di_h                           ),
     .CFGINTERRUPTASSERTN                 (cfg_interrupt_assert_n                     ),
     .CFGINTERRUPTSTATN                   (cfg_interrupt_stat_n                       ),
     .CFGDSBUSNUMBER                      (cfg_ds_bus_number                          ),
@@ -1570,4 +1585,23 @@ module pcie_block # (
     .PLDBGVEC                            (pl_dbg_vec                                 )
   );
 
+endmodule
+
+// a small, forced delay of a signal
+module oxc7_hold_buf #(
+        parameter W = 1
+) (
+    input [W-1:0] i,
+    output [W-1:0] o
+);
+  genvar k;
+  generate for (k = 0; k < W; k = k + 1) begin : b
+    (* keep, dont_touch = "true" *)
+    LUT1 #(
+      .INIT(2'b10)
+    ) l (
+      .I0(i[k]),
+      .O(o[k])
+    );
+  end endgenerate
 endmodule
