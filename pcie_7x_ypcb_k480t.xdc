@@ -12,22 +12,22 @@ set_property PACKAGE_PIN F1 [get_ports {pci_exp_txn}]
 # Reset
 set_property PACKAGE_PIN Y26 [get_ports {sys_rst_n}]
 set_property PULLUP true [get_ports {sys_rst_n}]
-set_property IOSTANDARD LVCMOS33 [get_ports {sys_rst_n}]
+set_property IOSTANDARD LVCMOS18 [get_ports {sys_rst_n}]
 
 # Single end 50 MHz clk
 set_property PACKAGE_PIN AA28 [get_ports {clk_50}]
-set_property IOSTANDARD LVCMOS33 [get_ports {clk_50}]
+set_property IOSTANDARD LVCMOS18 [get_ports {clk_50}]
 
 # Debug LEDs
 # yellow
 set_property PACKAGE_PIN N30 [get_ports {led[0]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {led[0]}]
+set_property IOSTANDARD LVCMOS18 [get_ports {led[0]}]
 # green
 set_property PACKAGE_PIN M30 [get_ports {led[1]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {led[1]}]
+set_property IOSTANDARD LVCMOS18 [get_ports {led[1]}]
 # red
 set_property PACKAGE_PIN P30 [get_ports {led[2]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {led[2]}]
+set_property IOSTANDARD LVCMOS18 [get_ports {led[2]}]
 
 # Clocks for Vivado
 create_clock -name clk_50 -period 20 [get_nets clk_50]
@@ -36,3 +36,9 @@ create_clock -name pcie_100mhz_txout -period 10 [get_nets pcie_7x_top_aximm_i/pc
 create_clock -name pcie_125mhz_d_rxusr_oob_p -period 8 [get_nets pcie_7x_top_aximm_i/pcie_7x_i/in_module_mmcm.pipe_clock_i/clk_125mhz]
 create_clock -name pcie_250mhz_gen2 -period 4 [get_nets pcie_7x_top_aximm_i/pcie_7x_i/in_module_mmcm.pipe_clock_i/clk_250mhz]
 create_clock -name pcie_62d5mhz_user1_user2 -period 16 [get_nets pcie_7x_top_aximm_i/pcie_7x_i/in_module_mmcm.pipe_clock_i/userclk1]
+
+# Banks 14 and 15 (all the pins above except the GTX ones) run at 1.8 V on this card: LVCMOS18.
+# AC24 is wired to a board reset on the YPCB-00338-1P1: left at the default pull-down, the card resets
+# as startup releases the I/O and DONE never goes high. The top drives it high.
+set_property PACKAGE_PIN AC24 [get_ports ac24]
+set_property IOSTANDARD LVCMOS18 [get_ports ac24]

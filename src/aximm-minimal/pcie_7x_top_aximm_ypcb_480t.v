@@ -14,8 +14,10 @@ module pcie_7x_top_aximm_ypcb_480t (
   input       sys_rst_n,
   
   input       clk_50,
-  output      [2:0] led
+  output      [2:0] led,
+  output      ac24          // board reset on the YPCB-00338-1P1: keep it high
 );
+assign ac24 = 1'b1;
 //wire sys_clk;
 //IBUFDS_GTE2 refclk_ibuf(.O(sys_clk), .ODIV2(), .I(sys_clk_p), .CEB(1'b0), .IB(sys_clk_n));
 //reg [31:0] cnt = 0;
